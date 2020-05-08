@@ -60,7 +60,8 @@ void RubikCubeSolve::photographPickPlace(geometry_msgs::PoseStamped& pose, bool 
         setEndEffectorPositionTarget(move_group1, -prepare_some_distance, 0, 0);
         move_group1.setNamedTarget("home1");
         loop_move(move_group1);
-        setEulerAngle(move_group1, -90, 0, 0, false);
+        // setEulerAngle(move_group1, -90, 0, 0, false);
+        setJoint6Value(move_group1, -90);
     }
     else
     {
@@ -85,7 +86,8 @@ void RubikCubeSolve::photograph()
     shoot(0);
 
     // 第二张
-    setEulerAngle(move_group1, 180, 0, 0, false);
+    // setEulerAngle(move_group1, 180, 0, 0, false);
+    setJoint6Value(move_group1, 180);
     shoot(0);
     
     // 放置换面
@@ -96,7 +98,8 @@ void RubikCubeSolve::photograph()
     // 第三张
     shoot(0);
     // 第四张
-    setEulerAngle(move_group1, 180, 0, 0, false);
+    // setEulerAngle(move_group1, 180, 0, 0, false);
+    setJoint6Value(move_group1, 180);
     shoot(0);
     // 更换抓取的机器人
     photographPickPlace(photographPose[0], false);
@@ -113,10 +116,12 @@ void RubikCubeSolve::photograph()
     setEndEffectorPositionTarget(move_group0, -prepare_some_distance, 0, 0);
     move_group0.setNamedTarget("home0");
     loop_move(move_group0);
-    setEulerAngle(move_group0, -90, 0, 0, false);
+    // setEulerAngle(move_group0, -90, 0, 0, false);
+    setJoint6Value(move_group0, -90);
     // 第五张
     shoot(1);
-    setEulerAngle(move_group0, 180, 0, 0, false);
+    // setEulerAngle(move_group0, 180, 0, 0, false);
+    setJoint6Value(move_group0, 180);
     // 第六张
     shoot(1);
 }
