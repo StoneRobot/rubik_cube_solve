@@ -1,0 +1,6 @@
+<launch>
+    <arg name="poses_file_path" default="$(find rubik_cube_solve)/cfg/pose.txt" />
+    <param name="poses_file_path" type="str" value="$(arg poses_file_path)" />
+    <node pkg="rubik_cube_solve" type="example0" name="example0" output="screen" />
+    <node pkg="rubik_cube_solve" type="example1" name="example1" output="screen" />
+</launch>

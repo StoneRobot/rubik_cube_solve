@@ -1,0 +1,5 @@
+int8 robot
+string PoseName
+bool isJointSpace
+---
+bool isFinish

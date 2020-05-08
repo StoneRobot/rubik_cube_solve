@@ -1,0 +1,45 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/st/catkin_ws/devel/include/**",
+                "/home/st/voice_controller_ws/devel/include/**",
+                "/home/st/turtlebot3_ws/devel/include/**",
+                "/opt/ros/kinetic/include/**",
+                "/home/st/catkin_ws/src/add_collision_object/include/**",
+                "/home/st/catkin_ws/src/analyse_data/include/**",
+                "/home/st/voice_controller_ws/src/awaken_offline/include/**",
+                "/home/st/catkin_ws/src/call_bridge/include/**",
+                "/home/st/catkin_ws/src/get_object_pose/include/**",
+                "/home/st/catkin_ws/src/hirop_ros/gripper_bridge/include/**",
+                "/home/st/catkin_ws/src/hirop_ros/hsc3api_bridge/include/**",
+                "/home/st/catkin_ws/src/hsr_irp/hsr_rosi_device/include/**",
+                "/home/st/catkin_ws/src/move_to_pick_place/include/**",
+                "/home/st/hu_ws/src/ros_exploring/robot_mrobot/mrobot_bringup/include/**",
+                "/home/st/moveit_arm_ws/src/pick_place_door/include/**",
+                "/home/st/catkin_ws/src/pick_place_example/include/**",
+                "/home/st/catkin_ws/src/hirop_ros/pickplace_bridge/include/**",
+                "/home/st/voice_controller_ws/src/robot_voice/include/**",
+                "/home/st/catkin_ws/src/rubik_cube_solve/include/**",
+                "/home/st/catkin_ws/src/safety_speed_bridge/include/**",
+                "/home/st/voice_controller_ws/src/template_matching/include/**",
+                "/home/st/turtlebot3_ws/src/turtlebot3_simulations/turtlebot3_fake/include/**",
+                "/home/st/turtlebot3_ws/src/turtlebot3_simulations/turtlebot3_gazebo/include/**",
+                "/home/st/turtlebot3_ws/src/turtlebot3/turtlebot3_slam/include/**",
+                "/home/st/catkin_ws/src/hirop_ros/vision_bridge/include/**",
+                "/home/st/voice_controller_ws/src/voice_to_trajectory/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

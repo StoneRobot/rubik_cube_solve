@@ -1,0 +1,9 @@
+int8 group
+float64 x
+float64 y
+float64 z
+float64 Ex
+float64 Ey
+float64 Ez
+---
+bool isFinish

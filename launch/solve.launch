@@ -1,0 +1,22 @@
+<launch>
+    <arg name="is_load_pose" default="true" />
+    <!-- 每次修改都要重新跑点位,将is_load_pose改为false -->
+    <arg name="prepare_some_distance" default="0.05" />
+    <arg name="record_pose_path" default="$(find rubik_cube_solve)" />
+    <param name="pose_data0_path" type="str" value="$(find rubik_cube_solve)/cfg/pose_data0.yaml" />
+    <param name="pose_data1_path" type="str" value="$(find rubik_cube_solve)/cfg/pose_data1.yaml" />
+    <include file="$(find rubik_cube_solve)/launch/load_pose_path.launch" />
+                                
+    <!-- <node pkg="add_collision_object" type="add_collision_object" name="add_board0" args=" add_collision_object/meshes/groove.stl groove /world 
+    255 255 255 1 -0.1 0.5 0.80 1.57 0.0 0.0" output="screen" /> -->
+
+    <node pkg="add_collision_object" type="add_collision_object" name="add_floor" args="add_collision_object/meshes/floor.stl floor /base_link 
+        0 0 0 1 -1.70 -2.12 0 0 1.57 0" output="screen" />
+
+    <node pkg="rubik_cube_solve" type="RubikCubeSolve" name="rubik_cube_solve" output="screen" >
+        <param name="is_load_pose" type="bool" value="$(arg is_load_pose)" />
+        <param name="prepare_some_distance" type="double" value="$(arg prepare_some_distance)" />
+        <param name="fakeInitializationState" type="bool" value="true" />
+        <param name="record_pose_path" type="str" value="$(arg record_pose_path)" />
+    </node>
+</launch>

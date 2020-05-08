@@ -1,0 +1,23 @@
+<launch>
+    <param name="pose03_path" type="str" value="$(find rubik_cube_solve)/pose/pose03.yaml" />
+    <param name="pose021_path" type="str" value="$(find rubik_cube_solve)/pose/pose021.yaml" />
+    <param name="pose022_path" type="str" value="$(find rubik_cube_solve)/pose/pose022.yaml" />
+    <param name="pose023_path" type="str" value="$(find rubik_cube_solve)/pose/pose023.yaml" />
+    <param name="pose024_path" type="str" value="$(find rubik_cube_solve)/pose/pose024.yaml" />
+    <param name="pose025_path" type="str" value="$(find rubik_cube_solve)/pose/pose025.yaml" />
+    <param name="pose011_path" type="str" value="$(find rubik_cube_solve)/pose/pose011.yaml" />
+    <param name="pose012_path" type="str" value="$(find rubik_cube_solve)/pose/pose012.yaml" />
+
+    <param name="pose14_path" type="str" value="$(find rubik_cube_solve)/pose/pose14.yaml" />
+    <param name="pose121_path" type="str" value="$(find rubik_cube_solve)/pose/pose121.yaml" />
+    <param name="pose122_path" type="str" value="$(find rubik_cube_solve)/pose/pose122.yaml" />
+    <param name="pose123_path" type="str" value="$(find rubik_cube_solve)/pose/pose123.yaml" />
+    <param name="pose124_path" type="str" value="$(find rubik_cube_solve)/pose/pose124.yaml" />
+    <param name="pose125_path" type="str" value="$(find rubik_cube_solve)/pose/pose125.yaml" />
+    <param name="pose111_path" type="str" value="$(find rubik_cube_solve)/pose/pose111.yaml" />
+    <param name="pose112_path" type="str" value="$(find rubik_cube_solve)/pose/pose112.yaml" />
+
+    <param name="pick0_path" type="str" value="$(find rubik_cube_solve)/recordPose/PosepickPose0.yaml" />
+    <param name="pick1_path" type="str" value="$(find rubik_cube_solve)/recordPose/PosepickPose1.yaml" />
+
+</launch>
