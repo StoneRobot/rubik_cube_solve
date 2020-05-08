@@ -11,7 +11,7 @@ move_group1{group1}
     analyseCmd = nh.advertiseService("analyse_rubik_cube_cmd", &RubikCubeSolve::analyseCallBack, this);
     end_effector = nh.advertiseService("end_effector_pose", &RubikCubeSolve::endEffectorPoseCallBack, this);
     record_pose = nh.advertiseService("record_pose", &RubikCubeSolve::recordPoseCallBack, this);
-    stop_move = nh.advertiseService("stop_move", &RubikCubeSolve::sotpMoveCallBack, this);
+    stop_move = nh.advertiseService("exit_move", &RubikCubeSolve::sotpMoveCallBack, this);
     openGripper_client0 = nh.serviceClient<hirop_msgs::openGripper>("openGripper0");
     closeGripper_client0 = nh.serviceClient<hirop_msgs::closeGripper>("closeGripper0");
     openGripper_client1 = nh.serviceClient<hirop_msgs::openGripper>("openGripper1");
@@ -34,6 +34,7 @@ void RubikCubeSolve::stopMove()
 {
     move_group0.stop();
     move_group1.stop();
+    exit(0);
 }
 
 void RubikCubeSolve::goPreparePose()
@@ -147,7 +148,7 @@ void RubikCubeSolve::setOrientationConstraints(moveit::planning_interface::MoveG
     ocm.link_name = move_group.getEndEffectorLink();
     ocm.header.frame_id = "world";
     ocm.orientation = move_group.getCurrentPose().pose.orientation;
-    ROS_INFO_STREAM(move_group.getCurrentPose());
+    // ROS_INFO_STREAM(move_group.getCurrentPose());
     ocm.absolute_x_axis_tolerance = 6.3;
     ocm.absolute_y_axis_tolerance = 6.3;
     ocm.absolute_z_axis_tolerance = 1.0;

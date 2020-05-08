@@ -125,20 +125,14 @@ public:
     void shoot(int num);
     void stopMove();
 private:
-
     void fakeInitializationState();
     moveit::planning_interface::MoveGroupInterface& getMoveGroup(int num);
-
-    // 存储0号机器人的位置数据
-    // std::vector<geometry_msgs::PoseStamped> poseStmpeded0;
-    // 存储1号机器人的位置数据
-    // std::vector<geometry_msgs::PoseStamped> poseStmpeded1
 
     std::vector<std::vector<geometry_msgs::PoseStamped> > robotPose;
     std::vector<geometry_msgs::PoseStamped> photographPose;
     moveit::planning_interface::MoveGroupInterface& move_group0;
     moveit::planning_interface::MoveGroupInterface& move_group1;
-    // std::vector<moveit::planning_interface::MoveGroupInterface&> group;
+
     ros::NodeHandle nh;
     ros::ServiceServer analyseCmd;
     bool analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Request& req, rubik_cube_solve::rubik_cube_solve_cmd::Response& rep);
