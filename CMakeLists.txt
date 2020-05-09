@@ -7,8 +7,7 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  message_generation roscpp moveit_msgs moveit_core moveit_ros_planning moveit_ros_planning_interface geometry_msgs tf tf2)
+find_package(catkin REQUIRED COMPONENTS interactive_markers moveit_core moveit_visual_tools moveit_ros_planning moveit_ros_planning_interface pluginlib geometric_shapes pcl_ros pcl_conversions rosbag tf2_ros tf2_eigen tf2_geometry_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -163,6 +162,7 @@ include_directories(
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
+
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
 # install(TARGETS ${PROJECT_NAME}_node
@@ -230,4 +230,12 @@ add_dependencies(RubikCubeSolve ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXP
 target_link_libraries(RubikCubeSolve
   ${catkin_LIBRARIES}
   -lyaml-cpp
+)
+
+add_executable(add
+  src/add.cpp
+)
+add_dependencies(add ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(add
+  ${catkin_LIBRARIES}
 )

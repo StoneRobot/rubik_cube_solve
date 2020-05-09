@@ -38,40 +38,64 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>moveit_core</build_depend>
-  <build_depend>roscpp</build_depend>
   
   
-  <build_depend>tf</build_depend>
-  <build_depend>tf2</build_depend>
+  
+  
+  
   <build_export_depend>moveit_core</build_export_depend>
-  <build_export_depend>roscpp</build_export_depend>
   
   
-  <build_export_depend>tf</build_export_depend>
-  <build_export_depend>tf2</build_export_depend>
+  
+  
+  
   <exec_depend>moveit_core</exec_depend>
-  <exec_depend>roscpp</exec_depend>
   
   
-  <exec_depend>tf</exec_depend>
-  <exec_depend>tf2</exec_depend>  <!-- The export tag contains other, unspecified, tags -->
+  
+  
+    <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
 
   </export>
-<build_depend>moveit_msgs</build_depend>
+
 <build_depend>moveit_ros_planning</build_depend>
 <build_depend>moveit_ros_planning_interface</build_depend>
-<build_depend>geometry_msgs</build_depend>
-<build_export_depend>moveit_msgs</build_export_depend>
 <build_export_depend>moveit_ros_planning</build_export_depend>
 <build_export_depend>moveit_ros_planning_interface</build_export_depend>
-<build_export_depend>geometry_msgs</build_export_depend>
-<exec_depend>moveit_msgs</exec_depend>
 <exec_depend>moveit_ros_planning</exec_depend>
 <exec_depend>moveit_ros_planning_interface</exec_depend>
-<exec_depend>geometry_msgs</exec_depend>
-<build_depend>message_generation</build_depend>
-<build_export_depend>message_generation</build_export_depend>
 <exec_depend>message_runtime</exec_depend>
+
+<build_depend>interactive_markers</build_depend>
+<build_depend>moveit_visual_tools</build_depend>
+<build_depend>pluginlib</build_depend>
+<build_depend>geometric_shapes</build_depend>
+<build_depend>pcl_ros</build_depend>
+<build_depend>pcl_conversions</build_depend>
+<build_depend>rosbag</build_depend>
+<build_depend>tf2_ros</build_depend>
+<build_depend>tf2_eigen</build_depend>
+<build_depend>tf2_geometry_msgs</build_depend>
+<build_export_depend>interactive_markers</build_export_depend>
+<build_export_depend>moveit_visual_tools</build_export_depend>
+<build_export_depend>pluginlib</build_export_depend>
+<build_export_depend>geometric_shapes</build_export_depend>
+<build_export_depend>pcl_ros</build_export_depend>
+<build_export_depend>pcl_conversions</build_export_depend>
+<build_export_depend>rosbag</build_export_depend>
+<build_export_depend>tf2_ros</build_export_depend>
+<build_export_depend>tf2_eigen</build_export_depend>
+<build_export_depend>tf2_geometry_msgs</build_export_depend>
+<exec_depend>interactive_markers</exec_depend>
+<exec_depend>moveit_visual_tools</exec_depend>
+<exec_depend>pluginlib</exec_depend>
+<exec_depend>geometric_shapes</exec_depend>
+<exec_depend>pcl_ros</exec_depend>
+<exec_depend>pcl_conversions</exec_depend>
+<exec_depend>rosbag</exec_depend>
+<exec_depend>tf2_ros</exec_depend>
+<exec_depend>tf2_eigen</exec_depend>
+<exec_depend>tf2_geometry_msgs</exec_depend>
 </package>
