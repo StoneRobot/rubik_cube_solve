@@ -113,7 +113,8 @@ public:
     bool openGripper(moveit::planning_interface::MoveGroupInterface& move_group);
     bool closeGripper(moveit::planning_interface::MoveGroupInterface& move_group);
 
-    void setOrientationConstraints(moveit::planning_interface::MoveGroupInterface& group);
+    void setOrientationConstraints(moveit::planning_interface::MoveGroupInterface& move_group, \
+                                                    double x_axis_tolerance=6.3, double y_axis_tolerance=6.3,double z_axis_tolerance=0.8);
     void setPositionConstraints(moveit::planning_interface::MoveGroupInterface& group);
 
     void clearConstraints(moveit::planning_interface::MoveGroupInterface& group);
@@ -155,4 +156,5 @@ private:
     ActionData Adata;
     double prepare_some_distance;
     const double rubikCubeAdd = 0.0095;
+    const int UP = 1;
 };

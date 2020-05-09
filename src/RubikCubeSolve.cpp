@@ -20,9 +20,14 @@ move_group1{group1}
     robotPose[0].resize(8);
     robotPose[1].resize(8);
     photographPose.resize(3);
-
-    loadPickPose();
-    photograph();
+    bool isShoot;
+    nh.getParam("/rubik_cube_solve/is_photo_praph", isShoot);
+    if (isShoot)
+    {
+        loadPickPose();
+        photograph();
+    }
+    
 
     loadPoseData();
     initPose();
@@ -147,16 +152,17 @@ void RubikCubeSolve::fakeInitializationState()
     setAndMove(move_group1, robotPose[1][0]);
 }
 
-void RubikCubeSolve::setOrientationConstraints(moveit::planning_interface::MoveGroupInterface& move_group)
+void RubikCubeSolve::setOrientationConstraints(moveit::planning_interface::MoveGroupInterface& move_group, \
+                                double x_axis_tolerance,double y_axis_tolerance,double z_axis_tolerance)
 {
     moveit_msgs::OrientationConstraint ocm;
     ocm.link_name = move_group.getEndEffectorLink();
     ocm.header.frame_id = "world";
     ocm.orientation = move_group.getCurrentPose().pose.orientation;
     // ROS_INFO_STREAM(move_group.getCurrentPose());
-    ocm.absolute_x_axis_tolerance = 6.3;
-    ocm.absolute_y_axis_tolerance = 6.3;
-    ocm.absolute_z_axis_tolerance = 1.0;
+    ocm.absolute_x_axis_tolerance = x_axis_tolerance;
+    ocm.absolute_y_axis_tolerance = y_axis_tolerance;
+    ocm.absolute_z_axis_tolerance = z_axis_tolerance;
     ocm.weight = 1.0;
     moveit_msgs::Constraints con;
     con.orientation_constraints.push_back(ocm);
@@ -347,13 +353,13 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
                 moveit::planning_interface::MoveGroupInterface& rotate_move_group,\
                 geometry_msgs::PoseStamped pose, int space_point, int angle)
 {
-    if(space_point == 1)
+    if(space_point == UP)
     {
-        setOrientationConstraints(capture_move_group);
-        setOrientationConstraints(rotate_move_group);
+        // setOrientationConstraints(capture_move_group);
+        // setOrientationConstraints(rotate_move_group);
         setAndMove(capture_move_group, robotPose[Adata.captureRobot][6]);
 
-        clearConstraints(rotate_move_group);
+        // clearConstraints(rotate_move_group);
         rotateCube(rotate_move_group, robotPose[Adata.otherRobot][7], angle);
     }
     else
@@ -366,7 +372,7 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
     // 抓住魔方的回原位
     pose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
     setAndMove(capture_move_group, pose);
-    clearConstraints(capture_move_group);
+    // clearConstraints(capture_move_group);
 }
 
 bool RubikCubeSolve::rotateCube(moveit::planning_interface::MoveGroupInterface& rotate_move_group, 
@@ -609,9 +615,9 @@ return setEndEffectorPosoTarget(move_group, 0, 0, 0, x, y, z, radian);
 geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPositionTarget(moveit::planning_interface::MoveGroupInterface& move_group, double x, double y, double z)
 {
     geometry_msgs::PoseStamped pose;
-    setOrientationConstraints(move_group);
+    // setOrientationConstraints(move_group, 0.1, 0.1, 0.1);
     pose = setEndEffectorPosoTarget(move_group, x, y, z, 0, 0, 0, false);
-    clearConstraints(move_group);
+    // clearConstraints(move_group);
     return pose;
 }
 

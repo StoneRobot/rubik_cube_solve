@@ -1,4 +1,4 @@
 int8 face
 int32 angle
 ---
-bool isFinish  
+bool isFinish
