@@ -16,10 +16,12 @@ move_group1{group1}
     closeGripper_client0 = nh.serviceClient<hirop_msgs::closeGripper>("closeGripper0");
     openGripper_client1 = nh.serviceClient<hirop_msgs::openGripper>("openGripper1");
     closeGripper_client1 = nh.serviceClient<hirop_msgs::closeGripper>("closeGripper1");
-    robotPose.resize(2);
-    robotPose[0].resize(8);
-    robotPose[1].resize(8);
+    robotPose.resize(ROWS);
+    robotPose[0].resize(COLUMNS);
+    robotPose[1].resize(COLUMNS);
     photographPose.resize(3);
+
+
     bool isShoot;
     nh.getParam("/rubik_cube_solve/is_photo_praph", isShoot);
     if (isShoot)
@@ -28,8 +30,7 @@ move_group1{group1}
         photograph();
     }
     
-
-    loadPoseData();
+    
     initPose();
 
     goPreparePose();
@@ -44,6 +45,8 @@ void RubikCubeSolve::stopMove()
 
 void RubikCubeSolve::goPreparePose()
 {
+    // setJointConstraints(move_group0);
+    // setJointConstraints(move_group1);
     setAndMove(move_group0, robotPose[0][0]);
     setAndMove(move_group1, robotPose[1][0]);
 
@@ -98,7 +101,7 @@ void RubikCubeSolve::photograph()
     // 放置换面
     photographPickPlace(photographPose[0], false);
     geometry_msgs::PoseStamped pose;
-    pose = setEndEffectorPosoTarget(move_group1, 0, rubikCubeAdd, -rubikCubeAdd, -90, 0, 0, false);
+    pose = setEndEffectorPosoTarget(move_group1, 0, rubikCubeAdd, -rubikCubeAdd, -90, 0, 0, false, false);
     photographPickPlace(pose, true);
     // 第三张
     shoot(0);
@@ -155,6 +158,7 @@ void RubikCubeSolve::fakeInitializationState()
 void RubikCubeSolve::setOrientationConstraints(moveit::planning_interface::MoveGroupInterface& move_group, \
                                 double x_axis_tolerance,double y_axis_tolerance,double z_axis_tolerance)
 {
+    // setJointConstraints(move_group);
     moveit_msgs::OrientationConstraint ocm;
     ocm.link_name = move_group.getEndEffectorLink();
     ocm.header.frame_id = "world";
@@ -194,6 +198,63 @@ void RubikCubeSolve::setPositionConstraints(moveit::planning_interface::MoveGrou
     move_group.setPlanningTime(2.0);
 }
 
+void RubikCubeSolve::setJointConstraints(moveit::planning_interface::MoveGroupInterface& move_group)
+{
+    moveit_msgs::JointConstraint jointCon;
+    if(move_group.getName() == "arm0")
+    {
+        jointCon.joint_name = "joint_4";
+        jointCon.position = 1.0;
+    }
+    else
+    {
+        jointCon.joint_name = "R_joint_4";
+        jointCon.position = -1.0;
+    }
+    jointCon.tolerance_above = 2.0;
+    jointCon.tolerance_below = 2.0;
+    jointCon.weight = 0.99;
+    moveit_msgs::Constraints con;
+    con.joint_constraints.push_back(jointCon);
+    move_group.setPathConstraints(con);
+    move_group.setPlanningTime(2.0);
+}
+
+void RubikCubeSolve::setConstraints(moveit::planning_interface::MoveGroupInterface& move_group, \
+                                                    double x_axis_tolerance, double y_axis_tolerance,double z_axis_tolerance)
+{
+    moveit_msgs::Constraints con;
+    moveit_msgs::JointConstraint jointCon;
+    if(move_group.getName() == "arm0")
+    {
+        jointCon.joint_name = "joint_4";
+        jointCon.position = 1.0;
+    }
+    else
+    {
+        jointCon.joint_name = "R_joint_4";
+        jointCon.position = -1.0;
+    }
+    jointCon.tolerance_above = 2.0;
+    jointCon.tolerance_below = 2.0;
+    jointCon.weight = 1;
+    con.joint_constraints.push_back(jointCon);
+
+    moveit_msgs::OrientationConstraint ocm;
+    ocm.link_name = move_group.getEndEffectorLink();
+    ocm.header.frame_id = "world";
+    ocm.orientation = move_group.getCurrentPose().pose.orientation;
+
+    ocm.absolute_x_axis_tolerance = x_axis_tolerance;
+    ocm.absolute_y_axis_tolerance = y_axis_tolerance;
+    ocm.absolute_z_axis_tolerance = z_axis_tolerance;
+    ocm.weight = 1.0;
+
+    con.orientation_constraints.push_back(ocm);
+    move_group.setPathConstraints(con);
+    move_group.setPlanningTime(5.0);
+}
+
 void RubikCubeSolve::clearConstraints(moveit::planning_interface::MoveGroupInterface& move_group)
 {
     move_group.clearPathConstraints();
@@ -223,7 +284,7 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
 bool  RubikCubeSolve::endEffectorPoseCallBack(rubik_cube_solve::end_effector_motion::Request& req, rubik_cube_solve::end_effector_motion::Response& rep)
 {
     geometry_msgs::PoseStamped pose;
-    pose = setEndEffectorPosoTarget(getMoveGroup(req.group), req.x, req.y, req.z, req.Ex, req.Ey, req.Ez, false);
+    pose = setEndEffectorPosoTarget(getMoveGroup(req.group), req.x, req.y, req.z, req.Ex, req.Ey, req.Ez, false, false);
     if(pose.header.frame_id.empty())
     {
         rep.isFinish = false;
@@ -341,11 +402,15 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     openGripper(capture_move_group);
     setAndMove(capture_move_group, pose);
     // 到达
+    setOrientationConstraints(capture_move_group, 0.1, 0.1, 0.1);
     setEndEffectorPositionTarget(capture_move_group, prepare_some_distance, 0, 0);
+    clearConstraints(capture_move_group);
     closeGripper(capture_move_group);
 
     openGripper(rotate_move_group);
+    setOrientationConstraints(rotate_move_group, 0.1, 0.1, 0.1);
     setEndEffectorPositionTarget(rotate_move_group, -prepare_some_distance, 0, 0);
+    clearConstraints(rotate_move_group);
     setAndMove(rotate_move_group, robotPose[Adata.otherRobot][0]);
 }
 
@@ -355,11 +420,9 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
 {
     if(space_point == UP)
     {
-        // setOrientationConstraints(capture_move_group);
-        // setOrientationConstraints(rotate_move_group);
+        setAndMove(capture_move_group, robotPose[Adata.captureRobot][3]);
         setAndMove(capture_move_group, robotPose[Adata.captureRobot][6]);
 
-        // clearConstraints(rotate_move_group);
         rotateCube(rotate_move_group, robotPose[Adata.otherRobot][7], angle);
     }
     else
@@ -367,12 +430,15 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
         rotateCube(rotate_move_group, robotPose[Adata.otherRobot][5], angle);
     }
     // 拧魔方的回原位
+    setOrientationConstraints(rotate_move_group, 0.1, 0.1, 0.1);
     setEndEffectorPositionTarget(rotate_move_group, -prepare_some_distance, 0, 0);
+    clearConstraints(rotate_move_group);
     setAndMove(rotate_move_group, robotPose[Adata.otherRobot][0]);
     // 抓住魔方的回原位
     pose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
+    if(Adata.space == UP)
+        setAndMove(capture_move_group, robotPose[Adata.captureRobot][3]);
     setAndMove(capture_move_group, pose);
-    // clearConstraints(capture_move_group);
 }
 
 bool RubikCubeSolve::rotateCube(moveit::planning_interface::MoveGroupInterface& rotate_move_group, 
@@ -380,7 +446,9 @@ bool RubikCubeSolve::rotateCube(moveit::planning_interface::MoveGroupInterface& 
 {
     openGripper(rotate_move_group);
     setAndMove(rotate_move_group, pose);
+    setOrientationConstraints(rotate_move_group, 0.1, 0.1, 0.1);
     setEndEffectorPositionTarget(rotate_move_group, prepare_some_distance, 0, 0);
+    clearConstraints(rotate_move_group);
     closeGripper(rotate_move_group);
     setJoint6Value(rotate_move_group, angle);
 }
@@ -410,90 +478,74 @@ bool RubikCubeSolve::closeGripper(moveit::planning_interface::MoveGroupInterface
     return flag;
 }
 
+void RubikCubeSolve::getPrepareSomeDistanceRobotPose()
+{
+    const double cos45 = 0.7071067;
+    for(int i=0; i<ROWS; ++i)
+        for(int j=0; j<COLUMNS; ++j)
+        {
+            if(j==7)
+            {
+                robotPose[i][j].pose.position.z -= 0.7071067*prepare_some_distance;
+                robotPose[i][j].pose.position.y -= pow(-1, i)*prepare_some_distance;
+                continue;
+            }
+            getPrepareSomeDistance(robotPose, i, j);
+        }
+}
+
 void RubikCubeSolve::initPose()
 {
     bool is_read_pose;
     nh.getParam("/rubik_cube_solve/is_load_pose", is_read_pose);
     if(is_read_pose)
     {
-        this->loadRobotPose();
-
+        this->loadRobotPoses();
     }
     else
     {
+        loadPoseData();
         this->getPoseStamped();
         writePoseFile();
     }
+    getPrepareSomeDistanceRobotPose();
 }
 
-void RubikCubeSolve::loadRobotPose()
+inline void RubikCubeSolve::getPrepareSomeDistance(std::vector<std::vector<geometry_msgs::PoseStamped> >& pose, int row, int column)
 {
-    std::string path;
+    if(column != 0 && column != 6)
+        pose[row][column].pose.position.y -= pow(-1, row)*prepare_some_distance;
+}
+
+inline void RubikCubeSolve::loadRobotPose(std::string paramName, int row, int column)
+{
     YAML::Node doc;
+    std::string path;
 
-    nh.getParam("/pose03_path", path);
+    nh.getParam(paramName, path);
     doc = YAML::LoadFile(path);
-    addData(robotPose[0][0], doc);
+    addData(robotPose[row][column], doc);
+}
 
-    nh.getParam("/pose021_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[0][1], doc);
-
-    nh.getParam("/pose022_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[0][2], doc);
-
-    nh.getParam("/pose023_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[0][3], doc);
-
-    nh.getParam("/pose024_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[0][4], doc);
-
-    nh.getParam("/pose025_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[0][5], doc);
-
-    nh.getParam("/pose011_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[0][6], doc);
-
-    nh.getParam("/pose012_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[0][7], doc);
+void RubikCubeSolve::loadRobotPoses()
+{
+    loadRobotPose("/pose03_path", 0, 0);
+    loadRobotPose("/pose021_path", 0, 1);
+    loadRobotPose("/pose022_path", 0, 2);
+    loadRobotPose("/pose023_path", 0, 3);
+    loadRobotPose("/pose024_path", 0, 4);
+    loadRobotPose("/pose025_path", 0, 5);
+    loadRobotPose("/pose011_path", 0, 6);
+    loadRobotPose("/pose012_path", 0, 7);
 //////////////////////////////////////////////
-    nh.getParam("/pose14_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[1][0], doc);
-
-    nh.getParam("/pose121_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[1][1], doc);
-
-    nh.getParam("/pose122_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[1][2], doc);
-
-    nh.getParam("/pose123_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[1][3], doc);
-
-    nh.getParam("/pose124_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[1][4], doc);
-
-    nh.getParam("/pose125_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[1][5], doc);
-
-    nh.getParam("/pose111_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[1][6], doc);
-
-    nh.getParam("/pose112_path", path);
-    doc = YAML::LoadFile(path);
-    addData(robotPose[1][7], doc);
+    loadRobotPose("/pose14_path", 1, 0);
+    loadRobotPose("/pose121_path", 1, 1);
+    loadRobotPose("/pose122_path", 1, 2);
+    loadRobotPose("/pose123_path", 1, 3);
+    loadRobotPose("/pose124_path", 1, 4);
+    loadRobotPose("/pose125_path", 1, 5);
+    loadRobotPose("/pose111_path", 1, 6);
+    loadRobotPose("/pose112_path", 1, 7);
 }
 
 void RubikCubeSolve::loadPickPose()
@@ -551,7 +603,7 @@ void RubikCubeSolve::loadPoseData()
     addData(data1.pose2, "pose2", node);
 }
 
-bool RubikCubeSolve::TransformToWorldFrame(geometry_msgs::PoseStamped& poseStamped)
+bool RubikCubeSolve::transformFrame(geometry_msgs::PoseStamped& poseStamped, std::string frame_id="world")
 {
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
     geometry_msgs::PoseStamped* worldFramePose = new geometry_msgs::PoseStamped[1];
@@ -563,7 +615,7 @@ bool RubikCubeSolve::TransformToWorldFrame(geometry_msgs::PoseStamped& poseStamp
     {
         try
         {
-            listener.transformPose("world", otherFramePose[0], worldFramePose[0]);
+            listener.transformPose(frame_id, otherFramePose[0], worldFramePose[0]);
             break;
         }
         catch(tf::TransformException& ex)
@@ -609,21 +661,21 @@ moveit::planning_interface::MoveItErrorCode RubikCubeSolve::moveGroupPlanAndMove
 
 geometry_msgs::PoseStamped RubikCubeSolve::setEulerAngle(moveit::planning_interface::MoveGroupInterface& move_group, double x, double y, double z, bool radian=true)
 {
-return setEndEffectorPosoTarget(move_group, 0, 0, 0, x, y, z, radian);
+    return setEndEffectorPosoTarget(move_group, 0, 0, 0, x, y, z, radian, false);
 }
 
 geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPositionTarget(moveit::planning_interface::MoveGroupInterface& move_group, double x, double y, double z)
 {
     geometry_msgs::PoseStamped pose;
     // setOrientationConstraints(move_group, 0.1, 0.1, 0.1);
-    pose = setEndEffectorPosoTarget(move_group, x, y, z, 0, 0, 0, false);
+    pose = setEndEffectorPosoTarget(move_group, x, y, z, 0, 0, 0, false, false);
     // clearConstraints(move_group);
     return pose;
 }
 
 geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPosoTarget(moveit::planning_interface::MoveGroupInterface& move_group, \
                                                                     double x, double y, double z,
-                                                                    double X, double Y, double Z, bool radian=true)
+                                                                    double X, double Y, double Z, bool radian=true, bool only_get_pose=false)
 {
     geometry_msgs::PoseStamped poseStamped;
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
@@ -641,8 +693,9 @@ geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPosoTarget(moveit::plan
     tf2::Quaternion orientation;
     orientation.setEuler(Y, X, Z);
     poseStamped.pose.orientation = tf2::toMsg(orientation);
-    TransformToWorldFrame(poseStamped);
-    setAndMove(move_group, poseStamped);
+    transformFrame(poseStamped);
+    if(!only_get_pose)
+        setAndMove(move_group, poseStamped);
     return poseStamped;
 }
 
@@ -659,11 +712,12 @@ void RubikCubeSolve::setJoint6Value(moveit::planning_interface::MoveGroupInterfa
     joint = move_group.getCurrentJointValues();
     a = angle2rad(a);
     joint[5] += a;
-    if((joint[5] > 5.0 || joint[5] < -5.0) && (a == 180 || a == -180))
+    if((joint[5] > 5.0 || joint[5] < -5.0) && (angle == 180 || angle == -180))
     {
+        ROS_INFO_STREAM("joint_6:" << joint[5]);
         joint[5] -= 2*a;
     }
-    ROS_INFO_STREAM(joint[5]);
+    ROS_INFO_STREAM("joint_6:" << joint[5]);
     move_group.setJointValueTarget(joint);
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
     move_group.plan(my_plan);
@@ -694,8 +748,10 @@ void RubikCubeSolve::getPoseStamped()
     // 空間點位2
     // 点位1
     ROS_INFO_STREAM("point 1");
-    robotPose[0][1] = setEndEffectorPosoTarget(move_group0, data0.pose1[0]-prepare_some_distance, data0.pose1[1]+rubikCubeAdd, data0.pose1[2], -90, 0, 0, false);
-    robotPose[1][1] = setEndEffectorPosoTarget(move_group1, data1.pose1[0]-prepare_some_distance, data1.pose1[1]-rubikCubeAdd, data1.pose1[2], 90, 0, 0, false);
+    // robotPose[0][1] = setEndEffectorPosoTarget(move_group0, data0.pose1[0]-prepare_some_distance, data0.pose1[1]+rubikCubeAdd, data0.pose1[2], -90, 0, 0, false);
+    // robotPose[1][1] = setEndEffectorPosoTarget(move_group1, data1.pose1[0]-prepare_some_distance, data1.pose1[1]-rubikCubeAdd, data1.pose1[2], 90, 0, 0, false);
+    robotPose[0][1] = setEndEffectorPosoTarget(move_group0, data0.pose1[0], data0.pose1[1]+rubikCubeAdd, data0.pose1[2], -90, 0, 0, false);
+    robotPose[1][1] = setEndEffectorPosoTarget(move_group1, data1.pose1[0], data1.pose1[1]-rubikCubeAdd, data1.pose1[2], 90, 0, 0, false);
     // 点位2
     ROS_INFO_STREAM("point 2");
     robotPose[0][2] = setEndEffectorPosoTarget(move_group0, 0, 0, -2*rubikCubeAdd, 180, 0, 0, false);
@@ -713,8 +769,10 @@ void RubikCubeSolve::getPoseStamped()
     robotPose[0][5] = setEndEffectorPosoTarget(move_group0, -rubikCubeAdd, 0, -rubikCubeAdd, -180, 0, 0, false);
     robotPose[1][5] = setEndEffectorPosoTarget(move_group1, -rubikCubeAdd, 0, -rubikCubeAdd, 180, 0, 0, false);
     ROS_INFO_STREAM("center");
-    setEndEffectorPosoTarget(move_group0, rubikCubeAdd+prepare_some_distance, 0, 0, 0, 0, 0, false);
-    setEndEffectorPosoTarget(move_group1, rubikCubeAdd+prepare_some_distance, 0, 0, 0, 0, 0, false);
+    // setEndEffectorPosoTarget(move_group0, rubikCubeAdd+prepare_some_distance, 0, 0, 0, 0, 0, false);
+    // setEndEffectorPosoTarget(move_group1, rubikCubeAdd+prepare_some_distance, 0, 0, 0, 0, 0, false);
+    setEndEffectorPosoTarget(move_group0, rubikCubeAdd, 0, 0, 0, 0, 0, false);
+    setEndEffectorPosoTarget(move_group1, rubikCubeAdd, 0, 0, 0, 0, 0, false);
 
     // setEndEffectorPositionTarget(move_group0, this->prepare_some_distance, 0, 0);
     // setEndEffectorPositionTarget(move_group1, this->prepare_some_distance, 0, 0);
@@ -723,11 +781,11 @@ void RubikCubeSolve::getPoseStamped()
     robotPose[1][6] = setEndEffectorPosoTarget(move_group1, data1.pose2[0], data1.pose2[1], data1.pose2[2], data1.pose2[3], data1.pose2[4], data1.pose2[5]);
 
 
-    setEndEffectorPosoTarget(move_group0, -rubikCubeAdd, 0, -rubikCubeAdd, 0, 0, 0);
-    setEndEffectorPosoTarget(move_group1, -rubikCubeAdd, 0, -rubikCubeAdd, 0, 0, 0);
+    robotPose[0][7] = setEndEffectorPosoTarget(move_group0, -rubikCubeAdd, 0, -rubikCubeAdd, 0, 0, 0);
+    robotPose[1][7] = setEndEffectorPosoTarget(move_group1, -rubikCubeAdd, 0, -rubikCubeAdd, 0, 0, 0);
 
-    robotPose[0][7] = setEndEffectorPositionTarget(move_group0, -prepare_some_distance, 0, 0);
-    robotPose[1][7] = setEndEffectorPositionTarget(move_group1, -prepare_some_distance, 0, 0);
+    // robotPose[0][7] = setEndEffectorPositionTarget(move_group0, -prepare_some_distance, 0, 0);
+    // robotPose[1][7] = setEndEffectorPositionTarget(move_group1, -prepare_some_distance, 0, 0);
 }
 
 void RubikCubeSolve::example()

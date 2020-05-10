@@ -12,10 +12,14 @@ rospy.Duration(5)
 rate = rospy.Rate(1)
 random.seed()
 cnt = 0
+j = 0
 while not rospy.is_shutdown():
     i = random.randint(1, 6)
+    if j == i:
+        continue
     rospy.loginfo("face: %d", i)
     client.call(i, 180)
     cnt += 1
     rospy.loginfo("cnt: %d", cnt)
     rate.sleep()
+    j = i

@@ -55,7 +55,7 @@ class RubikCubeSolve
 public:
     RubikCubeSolve(ros::NodeHandle nh, moveit::planning_interface::MoveGroupInterface& group0, moveit::planning_interface::MoveGroupInterface& group1);
     // 將坐標系轉換到世界坐標系
-    bool TransformToWorldFrame(geometry_msgs::PoseStamped& poseStamped);
+    bool transformFrame(geometry_msgs::PoseStamped& poseStamped, std::string frame_id);
     // 多次規劃和move, 減少失敗的概率
     moveit::planning_interface::MoveItErrorCode moveGroupPlanAndMove(moveit::planning_interface::MoveGroupInterface& move_group, \
                                                                 moveit::planning_interface::MoveGroupInterface::Plan& my_plan);
@@ -66,7 +66,7 @@ public:
     // 先移動,後旋轉
     geometry_msgs::PoseStamped setEndEffectorPosoTarget(moveit::planning_interface::MoveGroupInterface& move_group, \
                                                         double x, double y, double z,\
-                                                        double X, double Y, double Z, bool radian);
+                                                        double X, double Y, double Z, bool radian, bool only_get_pose);
     // 角度轉爲弧度
     double angle2rad(double& angle);
     // 設置joint_6的角度
@@ -96,7 +96,8 @@ public:
     // 現場獲取N個坐標
     void getPoseStamped();
     // 從文件讀取N個坐標
-    void loadRobotPose();
+    inline void loadRobotPoses();
+    void loadRobotPose(std::string path, int row, int column);
     void loadPickPose();
     
     void action();
@@ -117,6 +118,10 @@ public:
                                                     double x_axis_tolerance=6.3, double y_axis_tolerance=6.3,double z_axis_tolerance=0.8);
     void setPositionConstraints(moveit::planning_interface::MoveGroupInterface& group);
 
+    void setJointConstraints(moveit::planning_interface::MoveGroupInterface& group);
+    void setConstraints(moveit::planning_interface::MoveGroupInterface& move_group, \
+                                                    double x_axis_tolerance=6.3, double y_axis_tolerance=6.3,double z_axis_tolerance=0.8);
+
     void clearConstraints(moveit::planning_interface::MoveGroupInterface& group);
 
     void goPreparePose();
@@ -126,10 +131,15 @@ public:
     void shoot(int num);
     void stopMove();
 private:
+    void getPrepareSomeDistanceRobotPose();
+
+    inline void getPrepareSomeDistance(std::vector<std::vector<geometry_msgs::PoseStamped> >& pose, int row, int column);
     void fakeInitializationState();
     moveit::planning_interface::MoveGroupInterface& getMoveGroup(int num);
 
     std::vector<std::vector<geometry_msgs::PoseStamped> > robotPose;
+    const int ROWS = 2;
+    const int COLUMNS = 8;
     std::vector<geometry_msgs::PoseStamped> photographPose;
     moveit::planning_interface::MoveGroupInterface& move_group0;
     moveit::planning_interface::MoveGroupInterface& move_group1;
@@ -157,4 +167,5 @@ private:
     double prepare_some_distance;
     const double rubikCubeAdd = 0.0095;
     const int UP = 1;
+    const int down = 2;
 };
