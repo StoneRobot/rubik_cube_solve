@@ -12,6 +12,9 @@ move_group1{group1}
     end_effector = nh.advertiseService("end_effector_pose", &RubikCubeSolve::endEffectorPoseCallBack, this);
     record_pose = nh.advertiseService("record_pose", &RubikCubeSolve::recordPoseCallBack, this);
     stop_move = nh.advertiseService("exit_move", &RubikCubeSolve::sotpMoveCallBack, this);
+
+    rubikCubeSolveData_sub = nh.subscribe("rubikCubeSolveData", 20, &RubikCubeSolve::rubikCubeSolveDataCallBack, this);
+
     openGripper_client0 = nh.serviceClient<hirop_msgs::openGripper>("openGripper0");
     closeGripper_client0 = nh.serviceClient<hirop_msgs::closeGripper>("closeGripper0");
     openGripper_client1 = nh.serviceClient<hirop_msgs::openGripper>("openGripper1");
@@ -21,25 +24,57 @@ move_group1{group1}
     robotPose[1].resize(COLUMNS);
     photographPose.resize(3);
 
+    double speed;
+    nh.getParam("/rubik_cube_solve/speed", speed);
+
+    move_group0.setMaxAccelerationScalingFactor(0.1);
+    move_group1.setMaxAccelerationScalingFactor(0.1);
+    move_group0.setMaxVelocityScalingFactor(speed);
+    move_group1.setMaxVelocityScalingFactor(speed);
 
     bool isShoot;
     nh.getParam("/rubik_cube_solve/is_photo_praph", isShoot);
     if (isShoot)
     {
         loadPickPose();
-        photograph();
     }
-    
-    
     initPose();
+}
 
-    goPreparePose();
+void RubikCubeSolve::rubikCubeSolveDataCallBack(const std_msgs::Int8MultiArrayConstPtr& msg)
+{
+    for(int i=0; i < msg->data.size(); i++)
+    {
+        rubikCubeSolveData.push_back(msg->data[i]);
+    }
+}
+
+void RubikCubeSolve::transformData()
+{
+    int angleFlag;
+    int angle;
+    rubikCubeSolvetransformData.resize(rubikCubeSolveData.size());
+    for(int i=0; i < rubikCubeSolveData.size(); ++i)
+    {
+        rubikCubeSolvetransformData[i].resize(2);
+        angleFlag =rubikCubeSolveData[i] % 3;
+        if(angleFlag == 0)
+            angle = 90;
+        else if(angleFlag == 1)
+            angle = 180;
+        else 
+            angle = -90;
+    }
 }
 
 void RubikCubeSolve::stopMove()
 {
     move_group0.stop();
     move_group1.stop();
+    system("rosservice call /UR51/set_robot_enable 'enable: false'");
+    system("rosservice call /UR52/set_robot_enable 'enable: false'");
+    system("rosservice call /UR51/clear_robot_fault '{}'");
+    system("rosservice call /UR52/clear_robot_fault '{}'");
     exit(0);
 }
 
@@ -270,13 +305,21 @@ moveit::planning_interface::MoveGroupInterface& RubikCubeSolve::getMoveGroup(int
 
 bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Request& req, rubik_cube_solve::rubik_cube_solve_cmd::Response& rep)
 {
+    static int cnt = 0;
     if(req.face > 6 || req.face <= 0)
         Cstate.isFinish = true;
+    else if(cnt == 30 || cnt == 0)
+    {
+        cnt = 0;
+        photograph();
+        goPreparePose();
+    }
     else
     {
         analyseData(req.face, req.angle);
         action();
     }
+    cnt ++;
     rep.isFinish = true;
     return true;
 }
@@ -337,7 +380,6 @@ void RubikCubeSolve::analyseData(int face, int angle)
     }
     else
     {
-
         switch (face)
         {
             case 1:
@@ -720,16 +762,15 @@ void RubikCubeSolve::setJoint6Value(moveit::planning_interface::MoveGroupInterfa
     ROS_INFO_STREAM("joint_6:" << joint[5]);
     move_group.setJointValueTarget(joint);
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-    move_group.plan(my_plan);
-    loop_move(move_group);
+    moveGroupPlanAndMove(move_group, my_plan);
 }
 
 void RubikCubeSolve::getPoseStamped()
 {
     move_group0.setNamedTarget("home0");
     move_group1.setNamedTarget("home1");
-    move_group0.move();
-    move_group1.move();   
+    loop_move(move_group0);
+    loop_move(move_group1);
     setEulerAngle(move_group0, -1.57, 0, 0);
     setEulerAngle(move_group1, 1.57, 0, 0);
     setEulerAngle(move_group0, 0, -1.57, 0);

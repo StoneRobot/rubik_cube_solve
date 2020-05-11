@@ -6,6 +6,7 @@
 #include <tf/transform_datatypes.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <std_srvs/Empty.h>
+#include <std_msgs/Int8MultiArray.h>
 
 #include "rubik_cube_solve/rubik_cube_solve_cmd.h"
 #include "rubik_cube_solve/end_effector_motion.h"
@@ -131,6 +132,8 @@ public:
     void shoot(int num);
     void stopMove();
 private:
+
+    
     void getPrepareSomeDistanceRobotPose();
 
     inline void getPrepareSomeDistance(std::vector<std::vector<geometry_msgs::PoseStamped> >& pose, int row, int column);
@@ -140,6 +143,7 @@ private:
     std::vector<std::vector<geometry_msgs::PoseStamped> > robotPose;
     const int ROWS = 2;
     const int COLUMNS = 8;
+
     std::vector<geometry_msgs::PoseStamped> photographPose;
     moveit::planning_interface::MoveGroupInterface& move_group0;
     moveit::planning_interface::MoveGroupInterface& move_group1;
@@ -153,7 +157,12 @@ private:
     bool recordPoseCallBack(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
     ros::ServiceServer stop_move;
     bool sotpMoveCallBack(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
-
+    ros::Subscriber rubikCubeSolveData_sub;
+    void rubikCubeSolveDataCallBack(const std_msgs::Int8MultiArrayConstPtr& msg);
+    void transformData();
+    std::vector<int> rubikCubeSolveData;
+    std::vector<std::vector<int> > rubikCubeSolvetransformData;
+    
     ros::ServiceClient openGripper_client0;
     ros::ServiceClient closeGripper_client0;
     ros::ServiceClient openGripper_client1;

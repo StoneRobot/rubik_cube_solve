@@ -18,7 +18,7 @@ while not rospy.is_shutdown():
     if j == i:
         continue
     rospy.loginfo("face: %d", i)
-    client.call(i, 180)
+    client.call(i, 90)
     cnt += 1
     rospy.loginfo("cnt: %d", cnt)
     rate.sleep()

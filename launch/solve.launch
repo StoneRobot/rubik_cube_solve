@@ -4,9 +4,12 @@
     <arg name="prepare_some_distance" default="0.05" />
     <arg name="record_pose_path" default="$(find rubik_cube_solve)" />
     <arg name="is_photo_praph" default="false" />
+    <arg name="speed" default="1" />
     <param name="pose_data0_path" type="str" value="$(find rubik_cube_solve)/cfg/pose_data0.yaml" />
     <param name="pose_data1_path" type="str" value="$(find rubik_cube_solve)/cfg/pose_data1.yaml" />
     <include file="$(find rubik_cube_solve)/launch/load_pose_path.launch" />
+
+    <param name="/move_group/trajectory_execution/execution_duration_monitoring" type="bool" value="false" />
                                 
     <!-- <node pkg="add_collision_object" type="add_collision_object" name="add_board0" args=" add_collision_object/meshes/groove.stl groove /world 
     255 255 255 1 -0.1 0.5 0.80 1.57 0.0 0.0" output="screen" /> -->
@@ -20,5 +23,6 @@
         <param name="fakeInitializationState" type="bool" value="true" />
         <param name="record_pose_path" type="str" value="$(arg record_pose_path)" />
         <param name="is_photo_praph" type="bool" value="$(arg is_photo_praph)"  />
+        <param name="speed" type="double" value="$(arg speed)" />
     </node>
 </launch>
