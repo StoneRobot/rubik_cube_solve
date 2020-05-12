@@ -131,8 +131,9 @@ public:
     void photographPickPlace(geometry_msgs::PoseStamped& pose, bool isPick);
     void shoot(int num);
     void stopMove();
+    void spin();
 private:
-
+    void placeCube();
     
     void getPrepareSomeDistanceRobotPose();
 

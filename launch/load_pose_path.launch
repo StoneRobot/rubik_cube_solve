@@ -19,5 +19,6 @@
 
     <param name="pick0_path" type="str" value="$(find rubik_cube_solve)/recordPose/PosepickPose0.yaml" />
     <param name="pick1_path" type="str" value="$(find rubik_cube_solve)/recordPose/PosepickPose1.yaml" />
+    <param name="pick2_path" type="str" value="$(find rubik_cube_solve)/recordPose/PosepickPose2.yaml" />
 
 </launch>
