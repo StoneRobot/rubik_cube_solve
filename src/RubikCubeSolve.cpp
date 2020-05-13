@@ -43,6 +43,7 @@ void RubikCubeSolve::rubikCubeSolveDataCallBack(const std_msgs::Int8MultiArrayCo
     {
         rubikCubeSolveData.push_back(msg->data[i]);
     }
+    Cstate.isFinish = false;
     transformData();
 }
 
@@ -52,7 +53,7 @@ void RubikCubeSolve::transformData()
     int angle;
     int face;
     rubikCubeSolvetransformData.resize(rubikCubeSolveData.size());
-    for(int i=rubikCubeSolveData.size() - 1; i >= 0; --i)
+    for(int i=0; i < rubikCubeSolveData.size(); ++i)
     {
         rubikCubeSolvetransformData[i].resize(2);
         angleFlag =rubikCubeSolveData[i] % 3;
@@ -462,23 +463,18 @@ void RubikCubeSolve::spin()
 {
     while (ros::ok())
     {
-        //    if(!rubikCubeSolvetransformData.empty())
-        //    {
-        //         analyseData((rubikCubeSolvetransformData.end()-1)[0], (rubikCubeSolvetransformData.end()-1)[1]);
-        //         action();
-        //         rubikCubeSolvetransformData.erase(rubikCubeSolvetransformData.end()-1);
-        //    }
-        //    else
-        //    {
-        //        placeCube();
-        //    }   
-        for(int i=rubikCubeSolvetransformData.size() - 1; i >= 0; --i)
+        if(Cstate.isFinish ==  false)
         {
-            analyseData(rubikCubeSolvetransformData[i][0], rubikCubeSolvetransformData[i][1]);
-            action();
+            photograph();
+            goPreparePose();
+            for(int i=0; i<rubikCubeSolvetransformData.size(); ++i)
+            {
+                analyseData(rubikCubeSolvetransformData[i][0], rubikCubeSolvetransformData[i][1]);
+                action();
+            }
+            Cstate.isFinish = true;
+            placeCube();
         }
-        Cstate.isFinish = true;
-        placeCube();
     }
 }
 
