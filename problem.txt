@@ -1,6 +1,6 @@
 问题1:
     描述:
-        关节6无法转动
+        R_link4与floor假性接触,导致joint_6无法动作.
     RViz:
         [ERROR] [1589352969.516061176]: RRTConnect: Unable to sample any valid states for goal tree
         [ INFO] [1589352969.516113347]: RRTConnect: Created 1 states (1 start + 0 goal)

@@ -590,10 +590,13 @@ bool RubikCubeSolve::openGripper(moveit::planning_interface::MoveGroupInterface&
 {
     bool flag;
     hirop_msgs::openGripper srv;
-    if(move_group.getName() == "arm0")
+    if(move_group.getName() == "arm0"){
         flag = openGripper_client0.call(srv);
+        ROS_INFO("arm0 openGripper ");
+    }
     else
     {
+        ROS_INFO("arm1 openGripper ");
         flag = openGripper_client1.call(srv);
     }
     return flag;
@@ -602,10 +605,13 @@ bool RubikCubeSolve::closeGripper(moveit::planning_interface::MoveGroupInterface
 {
     bool flag;
     hirop_msgs::closeGripper srv;
-    if(move_group.getName() == "arm0")
+    if(move_group.getName() == "arm0"){
+        ROS_INFO("arm0 closeGripper ");
         flag = closeGripper_client0.call(srv);
+    }
     else
     {
+        ROS_INFO("arm1 closeGripper ");
         flag = closeGripper_client1.call(srv);
     }
     return flag;
