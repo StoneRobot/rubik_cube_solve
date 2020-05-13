@@ -1,0 +1,19 @@
+问题1:
+    描述:
+        关节6无法转动
+    RViz:
+        [ERROR] [1589352969.516061176]: RRTConnect: Unable to sample any valid states for goal tree
+        [ INFO] [1589352969.516113347]: RRTConnect: Created 1 states (1 start + 0 goal)
+        [ INFO] [1589352969.516145072]: No solution found after 0.040611 seconds
+        [ INFO] [1589352969.516184914]: Unable to solve the planning problem
+        [ INFO] [1589352969.521853708]: Planning request received for MoveGroup action. Forwarding to planning pipeline.
+        [ INFO] [1589352969.522294818]: Planner configuration 'arm1' will use planner 'geometric::RRTConnect'. Additional configuration parameters will be set when the planner is constructed.
+        [ INFO] [1589352969.522445745]: RRTConnect: Starting planning with 1 states already in datastructure
+        [ INFO] [1589352969.533884282]: Constraint satisfied:: Joint name: 'R_joint_1', actual value: -0.000070, desired value: 0.000000, tolerance_above: 0.000100, tolerance_below: 0.000100
+        [ INFO] [1589352969.534035074]: Constraint satisfied:: Joint name: 'R_joint_2', actual value: -0.000076, desired value: 0.000000, tolerance_above: 0.000100, tolerance_below: 0.000100
+        [ INFO] [1589352969.534090188]: Constraint satisfied:: Joint name: 'R_joint_3', actual value: 2.328326, desired value: 2.328232, tolerance_above: 0.000100, tolerance_below: 0.000100
+        [ INFO] [1589352969.534134824]: Constraint satisfied:: Joint name: 'R_joint_4', actual value: 0.000023, desired value: 0.000000, tolerance_above: 0.000100, tolerance_below: 0.000100
+        [ INFO] [1589352969.534178781]: Constraint satisfied:: Joint name: 'R_joint_5', actual value: 0.000010, desired value: 0.000000, tolerance_above: 0.000100, tolerance_below: 0.000100
+        [ INFO] [1589352969.534222071]: Constraint satisfied:: Joint name: 'R_joint_6', actual value: 1.570788, desired value: 1.570796, tolerance_above: 0.000100, tolerance_below: 0.000100
+        [ INFO] [1589352969.534304576]: Found a contact between 'floor' (type 'Object') and 'R_link4' (type 'Robot link'), which constitutes a collision. Contact information is not stored.
+        [ INFO] [1589352969.534352019]: Collision checking is considered complete (collision was found and 0 contacts are stored)

@@ -13,6 +13,9 @@
 #include "rubik_cube_solve/recordPoseStamped.h"
 #include "hirop_msgs/openGripper.h"
 #include "hirop_msgs/closeGripper.h"
+#include "cubeParse/TakePhoto.h"
+#include "cubeParse/SolveCube.h"
+#include "std_msgs/Bool.h"
 
 #include <vector>
 #include <iostream>
@@ -112,6 +115,7 @@ public:
     void example();
     void loop();
 
+
     bool openGripper(moveit::planning_interface::MoveGroupInterface& move_group);
     bool closeGripper(moveit::planning_interface::MoveGroupInterface& move_group);
 
@@ -158,11 +162,21 @@ private:
     bool recordPoseCallBack(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
     ros::ServiceServer stop_move;
     bool sotpMoveCallBack(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
+
+
+    ros::ServiceClient receiveSolve;
+    ros::ServiceClient shootClient;
+
+    ros::Subscriber beginSolve;
+    void beginSolve_sub(const std_msgs::BoolConstPtr& msg);
+    bool isBegingSolve = false;
+
     ros::Subscriber rubikCubeSolveData_sub;
     void rubikCubeSolveDataCallBack(const std_msgs::Int8MultiArrayConstPtr& msg);
     void transformData();
     std::vector<int> rubikCubeSolveData;
     std::vector<std::vector<int> > rubikCubeSolvetransformData;
+
     
     ros::ServiceClient openGripper_client0;
     ros::ServiceClient closeGripper_client0;
