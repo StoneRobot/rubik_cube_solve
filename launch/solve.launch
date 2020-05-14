@@ -11,11 +11,6 @@
 
     <param name="/move_group/trajectory_execution/execution_duration_monitoring" type="bool" value="false" />
                                 
-    <!-- <node pkg="add_collision_object" type="add_collision_object" name="add_board0" args=" add_collision_object/meshes/groove.stl groove /world 
-    255 255 255 1 -0.1 0.5 0.80 1.57 0.0 0.0" output="screen" /> -->
-
-    <!-- <node pkg="add_collision_object" type="add_collision_object" name="add_floor" args="add_collision_object/meshes/floor.stl floor /base_link 
-        0 0 0 1 -1.70 -2.12 0 0 1.57 0" output="screen" /> -->
 
     <node pkg="rubik_cube_solve" type="RubikCubeSolve" name="rubik_cube_solve" output="screen" >
         <param name="is_load_pose" type="bool" value="$(arg is_load_pose)" />

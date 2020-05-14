@@ -9,7 +9,6 @@ int main(int argc, char *argv[])
     moveit::planning_interface::MoveGroupInterface move_group0("arm0");
     moveit::planning_interface::MoveGroupInterface move_group1("arm1");
     RubikCubeSolve r(nh, move_group0, move_group1);
-    ROS_INFO("exe start");
     r.spin();
     ros::waitForShutdown();
     return 0;

@@ -14,12 +14,13 @@ random.seed()
 cnt = 0
 j = 0
 while not rospy.is_shutdown():
-    i = random.randint(1, 6)
-    if j == i:
-        continue
-    rospy.loginfo("face: %d", i)
-    client.call(i, 90)
-    cnt += 1
-    rospy.loginfo("cnt: %d", cnt)
-    rate.sleep()
-    j = i
+    for j in [90, -90, 180]:
+        i = random.randint(1, 6)
+        if j == i:
+            continue
+        rospy.loginfo("face: %d", i)
+        client.call(i, j)
+        cnt += 1
+        rospy.loginfo("cnt: %d", cnt)
+        rate.sleep()
+        j = i
