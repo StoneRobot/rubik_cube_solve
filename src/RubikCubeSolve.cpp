@@ -26,7 +26,7 @@ move_group1{group1}
     robotPose.resize(ROWS);
     robotPose[0].resize(COLUMNS);
     robotPose[1].resize(COLUMNS);
-    photographPose.resize(3);
+    photographPose.resize(5);
 
     double speed;
     nh.getParam("/rubik_cube_solve/speed", speed);
@@ -138,24 +138,26 @@ void RubikCubeSolve::photographPickPlace(geometry_msgs::PoseStamped& pose, bool 
         openGripper(move_group1);
         ros::Duration(1).sleep();
         setEndEffectorPositionTarget(move_group1, prepare_some_distance, 0, 0);
-        move_group1.setStartStateToCurrentState();
         closeGripper(move_group1);
         ros::Duration(1).sleep();
         setEndEffectorPositionTarget(move_group1, -prepare_some_distance, 0, 0);
-        move_group1.setStartStateToCurrentState();
-        move_group1.setNamedTarget("home1");
-        move_group1.setStartStateToCurrentState();
-        loop_move(move_group1);
-        move_group1.setStartStateToCurrentState();
     }
     else
     {
         setEndEffectorPositionTarget(move_group1, prepare_some_distance, 0, 0);
-        move_group1.setStartStateToCurrentState();
         openGripper(move_group1);
         setEndEffectorPositionTarget(move_group1, -prepare_some_distance, 0, 0);
-        move_group1.setStartStateToCurrentState();
     }
+}
+
+void RubikCubeSolve::photographstep(int posePick, int poseShoot)
+{
+    // 流程
+    photographPickPlace(photographPose[posePick], true);
+    // 去到被拍摄位置
+    setAndMove(move_group1, photographPose[poseShoot]);
+    shoot();
+    photographPickPlace(photographPose[posePick], false);
 }
 
 void RubikCubeSolve::photograph()
@@ -164,49 +166,62 @@ void RubikCubeSolve::photograph()
     move_group1.setNamedTarget("home1");
     loop_move(move_group0);
     loop_move(move_group1);
-    move_group0.setStartStateToCurrentState();
-    move_group1.setStartStateToCurrentState();
-
-    photographPickPlace(photographPose[0], true);
-    move_group0.setStartStateToCurrentState();
-    move_group1.setStartStateToCurrentState();
-    // 拍摄者到达拍摄位置
-    setEulerAngle(move_group0, -90, 0, 0, false);
-    setEulerAngle(move_group0, 0, -90, 0, false);
-    move_group1.setStartStateToCurrentState();
-
-    setJoint6Value(move_group1, 90);
-    // setEndEffectorPositionTarget(move_group0, 0.48, 0, 0);
-    //  第一张
-    shoot(0);
-    // 第二张
-    setJoint6Value(move_group1, 180);
-    shoot(0);
-    // 放置换面
-    photographPickPlace(photographPose[0], false);
-    // 抓取
-    photographPickPlace(photographPose[1], true);
-    setJoint6Value(move_group1, 90);
-    // 第三张
-    shoot(0);
-    // 第四张
-    setJoint6Value(move_group1, 180);
-    shoot(0);
-    // 放回
-    photographPickPlace(photographPose[1], false);
-    move_group1.setNamedTarget("home1");
-    loop_move(move_group1);
-    setEulerAngle(move_group1, 90, 0, 0, false);
-    setEulerAngle(move_group1, 0, -90, 0, false);
-
-    photographPickPlace(photographPose[2], true);
-    setJoint6Value(move_group1, 90);
-    // 第五张
-    shoot(0);
-    // 第六张
-    setJoint6Value(move_group1, 180);
-    shoot(0);
+    // 到达被拍照位置
+    setAndMove(move_group0, photographPose[4]);
+    // 流程
+    photographstep(0, 3);
+    photographstep(1, 3);
+    setEndEffectorPositionTarget(move_group1, 0, 0, 0.2);
+    photographstep(2, 3);
 }
+// {
+//     move_group0.setNamedTarget("home0");
+//     move_group1.setNamedTarget("home1");
+//     loop_move(move_group0);
+//     loop_move(move_group1);
+//     move_group0.setStartStateToCurrentState();
+//    
+
+//     photographPickPlace(photographPose[0], true);
+//     move_group0.setStartStateToCurrentState();
+//    
+//     // 拍摄者到达拍摄位置
+//     setEulerAngle(move_group0, -90, 0, 0, false);
+//     setEulerAngle(move_group0, 0, -90, 0, false);
+//    
+
+//     setJoint6Value(move_group1, 90);
+//     // setEndEffectorPositionTarget(move_group0, 0.48, 0, 0);
+//     //  第一张
+//     shoot(0);
+//     // 第二张
+//     setJoint6Value(move_group1, 180);
+//     shoot(0);
+//     // 放置换面
+//     photographPickPlace(photographPose[0], false);
+//     // 抓取
+//     photographPickPlace(photographPose[1], true);
+//     setJoint6Value(move_group1, 90);
+//     // 第三张
+//     shoot(0);
+//     // 第四张
+//     setJoint6Value(move_group1, 180);
+//     shoot(0);
+//     // 放回
+//     photographPickPlace(photographPose[1], false);
+//     move_group1.setNamedTarget("home1");
+//     loop_move(move_group1);
+//     setEulerAngle(move_group1, 90, 0, 0, false);
+//     setEulerAngle(move_group1, 0, -90, 0, false);
+
+//     photographPickPlace(photographPose[2], true);
+//     setJoint6Value(move_group1, 90);
+//     // 第五张
+//     shoot(0);
+//     // 第六张
+//     setJoint6Value(move_group1, 180);
+//     shoot(0);
+// }
 
 void RubikCubeSolve::placeCube()
 {
@@ -228,6 +243,11 @@ void RubikCubeSolve::shoot(int num)
 {
     ROS_INFO_STREAM("shoot");
     cubeParse::TakePhoto srv;
+    setJoint6Value(move_group1, 90);
+    shootClient.call(srv);
+    ros::WallDuration(2.0).sleep();
+
+    setJoint6Value(move_group1, 180);
     shootClient.call(srv);
     ros::WallDuration(2.0).sleep();
 }
@@ -500,8 +520,10 @@ void RubikCubeSolve::spin()
 {
     while (ros::ok())
     {
+        ROS_INFO("spin");
         if(isBegingSolve ==  true)
         {
+            ROS_INFO("start");
             photograph();
             goPreparePose();
             cubeParse::SolveCube srv;
@@ -691,21 +713,22 @@ void RubikCubeSolve::loadPickPose()
 {
     std::string path;
     YAML::Node doc;
-
-    nh.getParam("/pick0_path", path);
-    doc = YAML::LoadFile(path);
-    addData(photographPose[0], doc);
-    photographPose[0].pose.position.z += prepare_some_distance;
-
-    nh.getParam("/pick1_path", path);
-    doc = YAML::LoadFile(path);
-    addData(photographPose[1], doc);
-    photographPose[1].pose.position.z += prepare_some_distance;
-
-    nh.getParam("/pick2_path", path);
-    doc = YAML::LoadFile(path);
-    addData(photographPose[2], doc);
-    photographPose[2].pose.position.y += prepare_some_distance;
+    std::vector<std::string> pickPoseParam = {"/pick0_path", "/pick1_path", "/pick2_path",\
+                                            "/pick3_path", "/pick4_path"};
+    for(int i=0; i < pickPoseParam.size(); ++i)
+    {
+        nh.getParam(pickPoseParam[i], path);
+        doc = YAML::LoadFile(path);
+        addData(photographPose[i], doc);
+        if(i < 2)
+        {
+            photographPose[i].pose.position.z += prepare_some_distance;
+        }
+        else if(i = 2)
+        {
+            photographPose[i].pose.position.y += prepare_some_distance;
+        }
+    }
 }
 
 void RubikCubeSolve::addData(geometry_msgs::PoseStamped& pose, YAML::Node node)

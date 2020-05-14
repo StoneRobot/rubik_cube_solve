@@ -133,7 +133,8 @@ public:
 
     void photograph();
     void photographPickPlace(geometry_msgs::PoseStamped& pose, bool isPick);
-    void shoot(int num);
+    void photographstep(int posePick, int poseShoot);
+    void shoot(int num=0);
     void stopMove();
     void spin();
 private:
