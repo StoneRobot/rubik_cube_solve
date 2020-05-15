@@ -1,5 +1,5 @@
 #include <rubik_cube_solve/RubikCubeSolve.h>
-
+#include <math.h>
 RubikCubeSolve::RubikCubeSolve(ros::NodeHandle nodehandle, \
                                 moveit::planning_interface::MoveGroupInterface& group0, \
                                 moveit::planning_interface::MoveGroupInterface& group1)
@@ -136,16 +136,21 @@ void RubikCubeSolve::photographPickPlace(geometry_msgs::PoseStamped& pose, bool 
     {
         openGripper(move_group1);
         ros::Duration(1).sleep();
+        // 寸进的过程 前进1
         setEndEffectorPositionTarget(move_group1, prepare_some_distance, 0, 0);
         closeGripper(move_group1);
         ros::Duration(1).sleep();
+        // 寸进的过程 后退
         setEndEffectorPositionTarget(move_group1, -prepare_some_distance, 0, 0);
+        ROS_INFO("PICK UP  THE CUBE ");
     }
     else
     {
         setEndEffectorPositionTarget(move_group1, prepare_some_distance, 0, 0);
         openGripper(move_group1);
         setEndEffectorPositionTarget(move_group1, -prepare_some_distance, 0, 0);
+        ROS_INFO("PLACE UP  THE CUBE ");
+
     }
 }
 
@@ -160,6 +165,7 @@ void RubikCubeSolve::photographstep(int posePick, int poseShoot, bool only_pick=
         photographPickPlace(photographPose[posePick], false);
 }
 
+// 拍照点位
 void RubikCubeSolve::photograph()
 {
     move_group0.setNamedTarget("home0");
@@ -245,6 +251,31 @@ void RubikCubeSolve::setOrientationConstraints(moveit::planning_interface::MoveG
     cnt ++;
     ROS_INFO_STREAM(cnt);
 }
+
+// void RubikCubeSolve::setOrientationConstraintsEular(moveit::planning_interface::MoveGroupInterface& move_group, \
+//                                 double A,double B,double C)
+// {
+//     // setJointConstraints(move_group);
+//     static int cnt = 0;
+//     moveit_msgs::OrientationConstraint ocm;
+//     ocm.link_name = move_group.getEndEffectorLink();
+//     ocm.header.frame_id = "world";
+//     ocm.orientation = move_group.getCurrentPose().pose.orientation;
+
+//     // ROS_INFO_STREAM(move_group.getCurrentPose());
+//     tf::Quaternion d=  tf::createQuaternionFromRPY(A, B ,C);
+//     ocm.orientation.w
+//     ocm.absolute_y_axis_tolerance = y_axis_tolerance;
+//     ocm.absolute_z_axis_tolerance = z_axis_tolerance;
+//     ocm.weight = 1.0;
+//     moveit_msgs::Constraints con;
+//     con.orientation_constraints.push_back(ocm);
+//     move_group.setPathConstraints(con);
+//     move_group.setPlanningTime(5.0);
+//     cnt ++;
+//     ROS_INFO_STREAM(cnt);
+// }
+
 
 void RubikCubeSolve::setPositionConstraints(moveit::planning_interface::MoveGroupInterface& move_group)
 {
@@ -474,6 +505,7 @@ void RubikCubeSolve::analyseData(int face, int angle)
     Adata.otherRobot = (Adata.captureRobot + 1)%2;
 }
 
+// 主循环***
 void RubikCubeSolve::spin()
 {
     while (ros::ok())
@@ -503,8 +535,10 @@ void RubikCubeSolve::action()
 {
     if(Adata.isSwop)
     {
+        // 抓取 拧魔方
         swop(getMoveGroup(Adata.captureRobot), getMoveGroup(Adata.otherRobot), robotPose[Adata.captureRobot][Adata.capturePoint]);
     }
+
     step(getMoveGroup(Adata.captureRobot), getMoveGroup(Adata.otherRobot), robotPose[Adata.captureRobot][Adata.capturePoint], Adata.space, Adata.angle);
 }
 
@@ -520,6 +554,7 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     clearConstraints(capture_move_group);
     closeGripper(capture_move_group);
 
+
     openGripper(rotate_move_group);
     setOrientationConstraints(rotate_move_group, 0.1, 0.1, 0.1);
     setEndEffectorPositionTarget(rotate_move_group, -prepare_some_distance, 0, 0);
@@ -527,6 +562,7 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     setAndMove(rotate_move_group, robotPose[Adata.otherRobot][0]);
 }
 
+// step 旋转魔房
 bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& capture_move_group,\
                 moveit::planning_interface::MoveGroupInterface& rotate_move_group,\
                 geometry_msgs::PoseStamped pose, int space_point, int angle)
@@ -554,12 +590,14 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
     setAndMove(capture_move_group, pose);
 }
 
+//取料点拾取
 bool RubikCubeSolve::rotateCube(moveit::planning_interface::MoveGroupInterface& rotate_move_group, 
                                 geometry_msgs::PoseStamped pose, int angle)
 {
     openGripper(rotate_move_group);
     setAndMove(rotate_move_group, pose);
     setOrientationConstraints(rotate_move_group, 0.1, 0.1, 0.1);
+    rotate_move_group.getCurrentState();
     setEndEffectorPositionTarget(rotate_move_group, prepare_some_distance, 0, 0);
     clearConstraints(rotate_move_group);
     closeGripper(rotate_move_group);
@@ -800,6 +838,7 @@ geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPositionTarget(moveit::
     return pose;
 }
 
+//****
 geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPosoTarget(moveit::planning_interface::MoveGroupInterface& move_group, \
                                                                     double x, double y, double z,
                                                                     double X, double Y, double Z, bool radian=true, bool only_get_pose=false)
@@ -829,17 +868,27 @@ geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPosoTarget(moveit::plan
  double RubikCubeSolve::angle2rad(double& angle)
  {
 
-    return (angle/180)*3.1415926535;
+    return (angle/180)*M_PI;
  }
 
-void RubikCubeSolve::setJoint6Value(moveit::planning_interface::MoveGroupInterface& move_group, int angle)
+// TODO 主要出现的bugb代码
+void RubikCubeSolve::setJoint6Value(moveit::planning_interface::MoveGroupInterface& move_group, int angle,bool joint_mode)
 {
     double a = static_cast<double>(angle);
     std::vector<double> joint;
+
     joint = move_group.getCurrentJointValues();
+    // move_group.getCurrentState();
+    // move_group.getCurrentState()->copyJointGroupPositions(move_group.getCurrentState()->getRobotModel()->getJointModelGroup(move_group.getName()),1.0);
+    moveit_msgs::RobotState r;
+    r.joint_state.position = joint;
+    move_group.setStartState(r);
+    move_group.setStartStateToCurrentState();
+    ROS_INFO_STREAM("joint_6 current:" << joint[5]);
+
     a = angle2rad(a);
     joint[5] += a;
-    system("rosservice call /remove_objec 'data: true'");
+
     if((joint[5] > 5.0 || joint[5] < -5.0) && (angle == 180 || angle == -180))
     {
         ROS_INFO_STREAM("joint_6:" << joint[5]);
@@ -850,20 +899,58 @@ void RubikCubeSolve::setJoint6Value(moveit::planning_interface::MoveGroupInterfa
         joint[5] -= 4*a;
     }
 
-    ROS_INFO_STREAM("joint_6:" << joint[5]);
-    move_group.clearPoseTarget();
-    move_group.setJointValueTarget(joint);
-    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-    // moveGroupPlanAndMove(move_group, my_plan);
-    while (ros::ok())
-    {
-        if(move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS)
-        {
-            move_group.execute(my_plan);
-            break;
-        }
-    }
-    system("rosservice call /remove_objec 'data: false'");
+    ROS_INFO_STREAM("joint_6 reference:" << joint[5]);
+
+    // joint 4
+    // std::vector<std::string> data = move_group1.getJointNames();
+    // int index = 0;
+    // move_group.clearPoseTargets();
+    // for(auto it :data){
+    //     move_group.setJointValueTarget(it,joint[index]);
+    //     index++;
+    // }
+    // 旧版
+    // move_group.setJointValueTarget(joint);
+
+    /********************************************************/
+    // 新版0.1
+    std::vector<geometry_msgs::Pose> waypoints;
+    geometry_msgs::PoseStamped temp_pose = move_group.getCurrentPose(move_group.getEndEffectorLink());
+    std::vector<double> data  = move_group1.getCurrentRPY(move_group.getEndEffectorLink());
+
+    ROS_INFO_STREAM("R :" << data[2] +a);
+    geometry_msgs::Pose target_pose = temp_pose.pose;
+    tf::Quaternion q = tf::createQuaternionFromRPY(data[0],data[1], data[2] +a);
+
+    target_pose.orientation.w = q.w();
+    target_pose.orientation.x = q.x();
+    target_pose.orientation.y = q.y();
+    target_pose.orientation.z = q.z();
+
+    waypoints.push_back(target_pose);
+    moveit_msgs::RobotTrajectory trajectory;
+    const double jump_threshold = 0.0;
+    const double eef_step = 0.01;
+
+    while( move_group1.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory) < 0.8);
+    moveit::planning_interface::MoveGroupInterface::Plan plan;
+	plan.trajectory_ = trajectory;
+    move_group1.execute(plan);
+    /*-------------------------------------*/
+
+    // moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    //moveGroupPlanAndMove(move_group, my_plan);
+    //循环plan的标记
+    // int cout = 0; 
+    // while (ros::ok())
+    // {
+    //     if(move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS)
+    //     {
+    //         move_group.execute(my_plan);
+    //         break;
+    //     }
+
+    // }
 }
 
 void RubikCubeSolve::getPoseStamped()
@@ -881,6 +968,7 @@ void RubikCubeSolve::getPoseStamped()
 
     robotPose[0][0] = setEndEffectorPositionTarget(move_group0, data0.pose0[0], data0.pose0[1], data0.pose0[2]);
     robotPose[1][0] = setEndEffectorPositionTarget(move_group1, data1.pose0[0], data1.pose0[1], data1.pose0[2]);
+
     // 空間點位2
     // 点位1
     ROS_INFO_STREAM("point 1");
@@ -923,11 +1011,13 @@ void RubikCubeSolve::example()
 
     setAndMove(move_group0, robotPose[0][1]);
     setAndMove(move_group1, robotPose[1][5]);
+    // TODO
     setJoint6Value(move_group1, -90);
     setAndMove(move_group1, robotPose[1][0]);
 
     setAndMove(move_group0, robotPose[0][6]);
     setAndMove(move_group1, robotPose[1][7]);
+    // TODO
     setJoint6Value(move_group1, -90);
     setAndMove(move_group1, robotPose[1][0]);
     setAndMove(move_group0, robotPose[0][1]);

@@ -241,7 +241,7 @@ target_link_libraries(add
 )
 
 add_executable(remove_object
-  src/remove_object.cpp
+  src/apply_object.cpp
 )
 add_dependencies(remove_object ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(remove_object

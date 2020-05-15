@@ -8,8 +8,9 @@ roslaunch co605_dual_arm_gripper_moveit_config demo.launch 虚拟
 roslaunch rubik_cube_solve solve.launch
 # 进行标定使用的服务, move_group为机器人编号, 记录文件在recordPose,里面有点位名字说明,记录JointSpace的功能不可用
     rosservice call /record_pose  
+    
 # true或false都是启动,只是给一个信号
-    rostopic pub /beginSolve std_msgs/Bool "data: false" 
+    rostopic pub -1 /beginSolve std_msgs/Bool "data: false" 
 
 # 测试链接
 ping 10.10.56.214 1号机器人

@@ -74,7 +74,7 @@ public:
     // 角度轉爲弧度
     double angle2rad(double& angle);
     // 設置joint_6的角度
-    void setJoint6Value(moveit::planning_interface::MoveGroupInterface& move_group, int angle);
+    void setJoint6Value(moveit::planning_interface::MoveGroupInterface& move_group, int angle,bool joint_mode=false);
     // 循環執行,防止控制器不響應
     moveit::planning_interface::MoveItErrorCode loop_move(moveit::planning_interface::MoveGroupInterface& move_group);
     // 一步

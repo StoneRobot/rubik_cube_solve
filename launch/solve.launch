@@ -20,4 +20,7 @@
         <param name="is_photo_praph" type="bool" value="$(arg is_photo_praph)"  />
         <param name="speed" type="double" value="$(arg speed)" />
     </node>
+
+    <node pkg="rubik_cube_solve" type="remove_object" name="rubik_cube_object" output="screen" > 
+    </node>
 </launch>
