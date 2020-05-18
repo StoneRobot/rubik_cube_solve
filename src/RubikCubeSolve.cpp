@@ -462,6 +462,7 @@ bool RubikCubeSolve::recordPoseCallBack(rubik_cube_solve::recordPoseStamped::Req
     else
     {
         geometry_msgs::PoseStamped pose;
+        getMoveGroup(req.robot).setStartStateToCurrentState();
         pose = getMoveGroup(req.robot).getCurrentPose();
         ROS_INFO_STREAM(pose);
         writePoseOnceFile(path, pose);
