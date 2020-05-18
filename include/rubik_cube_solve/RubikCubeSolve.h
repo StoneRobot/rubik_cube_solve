@@ -74,7 +74,7 @@ public:
     // 角度轉爲弧度
     double angle2rad(double& angle);
     // 設置joint_6的角度
-    void setJoint6Value(moveit::planning_interface::MoveGroupInterface& move_group, int angle,bool joint_mode=false);
+    void setJoint6Value(moveit::planning_interface::MoveGroupInterface& move_group, int angle,bool joint_mode =true);
     // 循環執行,防止控制器不響應
     moveit::planning_interface::MoveItErrorCode loop_move(moveit::planning_interface::MoveGroupInterface& move_group);
     // 一步
@@ -137,6 +137,7 @@ public:
     void shoot(int num=0);
     void stopMove();
     void spin();
+    void robotMoveCartesianUnit2(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z);
 private:
     void placeCube();
     
@@ -163,6 +164,8 @@ private:
     bool recordPoseCallBack(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
     ros::ServiceServer stop_move;
     bool sotpMoveCallBack(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
+    ros::ServiceServer goToPose;
+    bool goToPoseServer(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
 
 
     ros::ServiceClient receiveSolve;

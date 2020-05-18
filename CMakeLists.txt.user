@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.5.0, 2020-05-15T10:23:11. -->
+<!-- Written by QtCreator 4.5.0, 2020-05-16T10:45:24. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -64,7 +64,7 @@
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">{c1894cab-b83c-4e7d-adec-59c427400006}</value>
    <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">1</value>
    <value type="int" key="ProjectExplorer.Target.ActiveDeployConfiguration">0</value>
-   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">1</value>
+   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">4</value>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.0">
     <valuelist type="QVariantList" key="CMake.Configuration">
      <value type="QString">CMAKE_BUILD_TYPE:STRING=Release</value>
