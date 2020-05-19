@@ -36,6 +36,10 @@ move_group1{group1}
     move_group1.setMaxAccelerationScalingFactor(0.1);
     move_group0.setMaxVelocityScalingFactor(speed);
     move_group1.setMaxVelocityScalingFactor(speed);
+    move_group0.setGoalPositionTolerance(0.01);
+    move_group1.setGoalPositionTolerance(0.01);
+    move_group0.setGoalOrientationTolerance(0.01);
+    move_group1.setGoalOrientationTolerance(0.01);
     loadPickPose();
     initPose();
     Cstate.isFinish = true;
