@@ -132,7 +132,7 @@ public:
     void goPreparePose();
 
     void photograph();
-    void photographPickPlace(geometry_msgs::PoseStamped& pose, bool isPick);
+    void photographPickPlace(geometry_msgs::PoseStamped& pose, bool isPick, int pickPoseNum);
     void photographstep(int posePick, int poseShoot, bool only_pick);
     void shoot(int num=0);
     void stopMove();

@@ -155,40 +155,48 @@ void RubikCubeSolve::goPreparePose()
 
 }
 //TODO 寸进的过程
-void RubikCubeSolve::photographPickPlace(geometry_msgs::PoseStamped& pose, bool isPick)
+void RubikCubeSolve::photographPickPlace(geometry_msgs::PoseStamped& pose, bool isPick, int pickPoseNum=0)
 {
     setAndMove(move_group1, pose);
-    //Y AXIS
     if(isPick)
-    {
+    { 
+        //Z AXIS
+        ROS_INFO("openGripper --- 1");
         openGripper(move_group1);
         ros::Duration(1).sleep();
         // 寸进的过程 前进1
-        robotMoveCartesianUnit2(move_group1,0,-prepare_some_distance,0);
+        // robotMoveCartesianUnit2(move_group1,0, 0, -prepare_some_distance);
+        setOrientationConstraints(move_group1, 0.05, 0.05, 0.05);
+        setEndEffectorPositionTarget(move_group1, prepare_some_distance, 0, 0);
+        clearConstraints(move_group1);
+        ROS_INFO("closeGripper --- 2");
         closeGripper(move_group1);
         // 寸进的过程 后退
-        robotMoveCartesianUnit2(move_group1,0,prepare_some_distance,0);
-        ROS_INFO("PICK UP  THE CUBE  Y");
+        // robotMoveCartesianUnit2(move_group1,0, 0, prepare_some_distance);
+        setOrientationConstraints(move_group1, 0.05, 0.05, 0.05);
+        setEndEffectorPositionTarget(move_group1, -prepare_some_distance, 0, 0);
+        clearConstraints(move_group1);
+        ROS_INFO("PICK UP  THE CUBE Z");
     }
     else
     {
-        //Z AXIS
-        robotMoveCartesianUnit2(move_group1,0,0,-prepare_some_distance);
+        //Y AXIS
+        robotMoveCartesianUnit2(move_group1,0,0, -prepare_some_distance);
         openGripper(move_group1);
-        robotMoveCartesianUnit2(move_group1, 0,0, prepare_some_distance);
-        ROS_INFO("PLACE UP  THE CUBE Z");
-
+        robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
+        ROS_INFO("PLACE UP  THE CUBE Y");
     }
 }
 
 void RubikCubeSolve::photographstep(int posePick, int poseShoot, bool only_pick=false)
 {
     // 流程
-    photographPickPlace(photographPose[posePick], only_pick);
+    photographPickPlace(photographPose[posePick], true);
     // 去到被拍摄位置
     setAndMove(move_group1, photographPose[poseShoot]);
     //point grab
     shoot();
+    // 放置
     if(!only_pick)
         photographPickPlace(photographPose[posePick], false);
 }
@@ -203,7 +211,7 @@ void RubikCubeSolve::photograph()
     // 
     // 到达被拍照位置
     setAndMove(move_group0, photographPose[4]);
-
+    ROS_INFO("photograph start....");
     photographstep(0, 3);
     ROS_INFO("photographstep(0, 3)....");
     photographstep(1, 3);
@@ -427,6 +435,15 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
         {
             goPreparePose();
         }
+        else if(flag ==2)
+        {
+            move_group1.setNamedTarget("home1");
+            move_group1.move();
+            setEulerAngle(move_group1, 90, 0, 0, false);
+            setEulerAngle(move_group1, 0, -90, 0, false);
+            photographPickPlace(photographPose[2], true);
+            goPreparePose();
+        }
     }
     else
     {
@@ -644,36 +661,37 @@ bool RubikCubeSolve::rotateCube(moveit::planning_interface::MoveGroupInterface& 
     rotate_move_group.clearPathConstraints();
     rotate_move_group.clearTrajectoryConstraints();
     setJoint6Value(rotate_move_group, angle);
+    openGripper(rotate_move_group);
 }
 
 bool RubikCubeSolve::openGripper(moveit::planning_interface::MoveGroupInterface& move_group)
 {
     bool flag = true;
-//    hirop_msgs::openGripper srv;
-//    if(move_group.getName() == "arm0"){
-//        flag = openGripper_client0.call(srv);
-//        ROS_INFO("arm0 openGripper ");
-//    }
-//    else
-//    {
-//        ROS_INFO("arm1 openGripper ");
-//        flag = openGripper_client1.call(srv);
-//    }
+   hirop_msgs::openGripper srv;
+   if(move_group.getName() == "arm0"){
+       flag = openGripper_client0.call(srv);
+       ROS_INFO("arm0 openGripper ");
+   }
+   else
+   {
+       ROS_INFO("arm1 openGripper ");
+       flag = openGripper_client1.call(srv);
+   }
     return flag;
 }
 bool RubikCubeSolve::closeGripper(moveit::planning_interface::MoveGroupInterface& move_group)
 {
-    bool flag = true;
-//    hirop_msgs::closeGripper srv;
-//    if(move_group.getName() == "arm0"){
-//        ROS_INFO("arm0 closeGripper ");
-//        flag = closeGripper_client0.call(srv);
-//    }
-//    else
-//    {
-//        ROS_INFO("arm1 closeGripper ");
-//        flag = closeGripper_client1.call(srv);
-//    }
+   bool flag = true;
+   hirop_msgs::closeGripper srv;
+   if(move_group.getName() == "arm0"){
+       ROS_INFO("arm0 closeGripper ");
+       flag = closeGripper_client0.call(srv);
+   }
+   else
+   {
+       ROS_INFO("arm1 closeGripper ");
+       flag = closeGripper_client1.call(srv);
+   }
     return flag;
 }
 
