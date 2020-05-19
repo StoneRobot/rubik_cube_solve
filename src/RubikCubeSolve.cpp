@@ -408,11 +408,11 @@ moveit::planning_interface::MoveGroupInterface& RubikCubeSolve::getMoveGroup(int
 bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Request& req, rubik_cube_solve::rubik_cube_solve_cmd::Response& rep)
 {
     static int cnt = 0;   
-    bool flag;
-    nh.getParam("/rubik_cube_solve/is_photo_praph", flag);
+    int flag;
+    nh.getParam("/rubik_cube_solve/test", flag);
     if(cnt == 30 || cnt == 0)
     {
-        if(flag)
+        if(flag == 0)
         {
             if(cnt != 0)
             {
@@ -421,6 +421,10 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
             }
             cnt = 0;
             photograph();
+            goPreparePose();
+        }
+        else if(flag == 1)
+        {
             goPreparePose();
         }
     }
@@ -462,7 +466,6 @@ bool RubikCubeSolve::recordPoseCallBack(rubik_cube_solve::recordPoseStamped::Req
     else
     {
         geometry_msgs::PoseStamped pose;
-        //getMoveGroup(req.robot).setStartStateToCurrentState();
         pose = getMoveGroup(req.robot).getCurrentPose();
         ROS_INFO_STREAM(pose);
         writePoseOnceFile(path, pose);
