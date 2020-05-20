@@ -8,6 +8,7 @@
 #include <std_srvs/Empty.h>
 #include <std_msgs/Int8MultiArray.h>
 
+
 #include "rubik_cube_solve/rubik_cube_solve_cmd.h"
 #include "rubik_cube_solve/end_effector_motion.h"
 #include "rubik_cube_solve/recordPoseStamped.h"
@@ -57,7 +58,7 @@ struct ActionData
 class RubikCubeSolve
 {
 public:
-    RubikCubeSolve(ros::NodeHandle nh, moveit::planning_interface::MoveGroupInterface& group0, moveit::planning_interface::MoveGroupInterface& group1);
+    RubikCubeSolve(ros::NodeHandle n, moveit::planning_interface::MoveGroupInterface& group0, moveit::planning_interface::MoveGroupInterface& group1);
     // 將坐標系轉換到世界坐標系
     bool transformFrame(geometry_msgs::PoseStamped& poseStamped, std::string frame_id);
     // 多次規劃和move, 減少失敗的概率
@@ -67,6 +68,8 @@ public:
     geometry_msgs::PoseStamped setEulerAngle(moveit::planning_interface::MoveGroupInterface& move_group, double x, double y, double z, bool radian);
     // 以末端爲參考系,進行移動
     geometry_msgs::PoseStamped setEndEffectorPositionTarget(moveit::planning_interface::MoveGroupInterface& move_group, double x, double y, double z);
+    // 使用笛卡尔前进
+    geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPositionCartesian(moveit::planning_interface::MoveGroupInterface& move_group, double x, double y, double z);
     // 先移動,後旋轉
     geometry_msgs::PoseStamped setEndEffectorPosoTarget(moveit::planning_interface::MoveGroupInterface& move_group, \
                                                         double x, double y, double z,\
@@ -138,14 +141,18 @@ public:
     void stopMove();
     void spin();
     void robotMoveCartesianUnit2(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z);
-private:
+    moveit::planning_interface::MoveGroupInterface& getMoveGroup(int num);
     void placeCube();
-    
+    bool recordPose(int robotNum, std::string name, bool isJointSpce=false);
+/////////////////////////
+    int calibration();
+    void pickPose();
+////////////////////////
+private:
     void getPrepareSomeDistanceRobotPose();
 
     inline void getPrepareSomeDistance(std::vector<std::vector<geometry_msgs::PoseStamped> >& pose, int row, int column);
     void fakeInitializationState();
-    moveit::planning_interface::MoveGroupInterface& getMoveGroup(int num);
 
     std::vector<std::vector<geometry_msgs::PoseStamped> > robotPose;
     const int ROWS = 2;
@@ -167,9 +174,12 @@ private:
     ros::ServiceServer goToPose;
     bool goToPoseServer(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
 
-
     ros::ServiceClient receiveSolve;
     ros::ServiceClient shootClient;
+    ros::ServiceClient openGripper_client0;
+    ros::ServiceClient closeGripper_client0;
+    ros::ServiceClient openGripper_client1;
+    ros::ServiceClient closeGripper_client1;
 
     ros::Subscriber beginSolve;
     void beginSolve_sub(const std_msgs::BoolConstPtr& msg);
@@ -180,12 +190,6 @@ private:
     void transformData();
     std::vector<int> rubikCubeSolveData;
     std::vector<std::vector<int> > rubikCubeSolvetransformData;
-
-    
-    ros::ServiceClient openGripper_client0;
-    ros::ServiceClient closeGripper_client0;
-    ros::ServiceClient openGripper_client1;
-    ros::ServiceClient closeGripper_client1;
 
     RecordPoseData data0;
     RecordPoseData data1;
