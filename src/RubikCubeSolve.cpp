@@ -537,6 +537,7 @@ bool RubikCubeSolve::recordPose(int robotNum, std::string name, bool isJointSpce
     else
     {
         geometry_msgs::PoseStamped pose;
+        getMoveGroup(robotNum).getCurrentPose();
         pose = getMoveGroup(robotNum).getCurrentPose();
         ROS_INFO_STREAM(pose);
         writePoseOnceFile(path, pose);
