@@ -68,8 +68,6 @@ public:
     geometry_msgs::PoseStamped setEulerAngle(moveit::planning_interface::MoveGroupInterface& move_group, double x, double y, double z, bool radian);
     // 以末端爲參考系,進行移動
     geometry_msgs::PoseStamped setEndEffectorPositionTarget(moveit::planning_interface::MoveGroupInterface& move_group, double x, double y, double z);
-    // 使用笛卡尔前进
-    geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPositionCartesian(moveit::planning_interface::MoveGroupInterface& move_group, double x, double y, double z);
     // 先移動,後旋轉
     geometry_msgs::PoseStamped setEndEffectorPosoTarget(moveit::planning_interface::MoveGroupInterface& move_group, \
                                                         double x, double y, double z,\
@@ -83,7 +81,7 @@ public:
     // 一步
     bool step(moveit::planning_interface::MoveGroupInterface& capture_move_group,\
                 moveit::planning_interface::MoveGroupInterface& rotate_move_group,\
-                geometry_msgs::PoseStamped pose, int space_point, int angle);
+                geometry_msgs::PoseStamped pose);
     bool swop(moveit::planning_interface::MoveGroupInterface& capture_move_group,\
                         moveit::planning_interface::MoveGroupInterface& rotate_move_group,\
                         geometry_msgs::PoseStamped pose);
@@ -135,15 +133,15 @@ public:
     void goPreparePose();
 
     void photograph();
-    void photographPickPlace(geometry_msgs::PoseStamped& pose, bool isPick, int pickPoseNum);
-    void photographstep(int posePick, int poseShoot, bool only_pick);
+    void photographPickPlace(int robotNum, geometry_msgs::PoseStamped& pose, bool isPick, int pre_grasp_approach[], int post_grasp_retreat[]);
+    void photographstep(int robotNum, int posePick, int poseShoot, int pre_grasp_approach[], int post_grasp_retreat[], bool only_pick);
     void shoot(int num=0);
     void stopMove();
     void spin();
     void robotMoveCartesianUnit2(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z);
     moveit::planning_interface::MoveGroupInterface& getMoveGroup(int num);
     void placeCube();
-    bool recordPose(int robotNum, std::string name, bool isJointSpce=false);
+    bool recordPose(int robotNum, std::string name, bool isJointSpace);
 /////////////////////////
     int calibration();
     void pickPose();

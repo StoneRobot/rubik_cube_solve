@@ -13,6 +13,7 @@ rate = rospy.Rate(1)
 random.seed()
 cnt = 0
 k = 0
+client.call(0, 0)
 while not rospy.is_shutdown():
     for j in [90, -90, 180]:
         i = random.randint(1, 6)
