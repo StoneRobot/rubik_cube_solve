@@ -16,12 +16,13 @@ k = 0
 client.call(0, 0)
 while not rospy.is_shutdown():
     for j in [90, -90, 180]:
-        i = random.randint(1, 6)
-        if k == i:
-            continue
-        rospy.loginfo("face: %d", i)
-        client.call(i, j)
-        cnt += 1
-        rospy.loginfo("cnt: %d", cnt)
-        rate.sleep()
-        k = i
+        for i in [2, 1]:
+            # i = random.randint(1, 6)
+            # if k == i:
+            #     continue
+            rospy.loginfo("face: %d", i)
+            client.call(i, j)
+            cnt += 1
+            rospy.loginfo("cnt: %d", cnt)
+            rate.sleep()
+            # k = i

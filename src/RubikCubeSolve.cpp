@@ -32,14 +32,14 @@ move_group1{group1}
     double speed;
     nh.getParam("/rubik_cube_solve/speed", speed);
 
-    move_group0.setMaxAccelerationScalingFactor(0.1);
-    move_group1.setMaxAccelerationScalingFactor(0.1);
+    move_group0.setMaxAccelerationScalingFactor(0.05);
+    move_group1.setMaxAccelerationScalingFactor(0.05);
     move_group0.setMaxVelocityScalingFactor(speed);
     move_group1.setMaxVelocityScalingFactor(speed);
-    move_group0.setGoalPositionTolerance(0.01);
-    move_group1.setGoalPositionTolerance(0.01);
-    move_group0.setGoalOrientationTolerance(0.01);
-    move_group1.setGoalOrientationTolerance(0.01);
+    move_group0.setGoalPositionTolerance(0.001);
+    move_group1.setGoalPositionTolerance(0.001);
+    // move_group0.setGoalOrientationTolerance(0.001);
+    // move_group1.setGoalOrientationTolerance(0.001);
     loadPickPose();
     initPose();
     Cstate.isFinish = true;
@@ -442,17 +442,20 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
         if(flag == 0)
         {
             // 測試拍照
+            ROS_INFO_STREAM("test 0");
             photograph();
             goPreparePose();
         }
         else if(flag == 1)
         {
             // 去到預備動作
+            ROS_INFO_STREAM("test 1");
             goPreparePose();
         }
         else if(flag ==2)
         {
             // 測試拿起魔方的動作
+            ROS_INFO_STREAM("test 2");
             move_group1.setNamedTarget("home1");
             move_group1.move();
             setEulerAngle(move_group1, 90, 0, 0, false);
@@ -465,6 +468,7 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
         else if(flag == 3)
         {
             // 測試機器人0的精度
+            ROS_INFO_STREAM("test 3");
             geometry_msgs::PoseStamped pose;
             move_group0.setNamedTarget("home0");
             move_group0.move();
@@ -478,6 +482,7 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
         else if(flag == 4)
         {
             // 測試機器人1的精度
+            ROS_INFO_STREAM("test 4");
             move_group1.setNamedTarget("home1");
             move_group1.move();
             setAndMove(move_group1, photographPose[2]);
@@ -488,8 +493,47 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
         else if (flag == 5)
         {
             // 放置魔方
+            ROS_INFO_STREAM("test 5");
             goPreparePose();
             placeCube();
+        }
+        else if(flag == 6)
+        {
+            // 測試拿起魔方的動作
+            ROS_INFO_STREAM("test 6");
+            move_group1.setNamedTarget("home1");
+            move_group1.move();
+            geometry_msgs::PoseStamped pose;
+            pose = photographPose[0];
+            pose.pose.position.z = photographPose[0].pose.position.z - prepare_some_distance;
+            setAndMove(move_group1, photographPose[0]);
+            openGripper(move_group1);
+            // robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
+            closeGripper(move_group1);
+        }
+        else if(flag == 7)
+        {
+            // 測試拿起魔方的動作
+            ROS_INFO_STREAM("test 7");
+            move_group1.setNamedTarget("home1");
+            move_group1.move();
+            setAndMove(move_group1, photographPose[0]);
+            openGripper(move_group1);
+            robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
+            closeGripper(move_group1);
+        }
+        else if(flag == 8)
+        {
+            // 測試機器人1的精度
+            ROS_INFO_STREAM("test 8");
+            move_group1.setNamedTarget("home1");
+            move_group1.move();
+            setAndMove(move_group1, photographPose[2]);
+            openGripper(move_group1);
+            robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
+            closeGripper(move_group1);
+            robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
+            goPreparePose();
         }
     }
     else
@@ -926,6 +970,7 @@ moveit::planning_interface::MoveItErrorCode RubikCubeSolve::setAndMove(moveit::p
     std::vector<double> joint = move_group.getCurrentJointValues();
     moveit_msgs::RobotState r;
     r.joint_state.position = joint;
+    
     move_group.setStartState(r);
     move_group.setStartStateToCurrentState();
 
