@@ -191,23 +191,39 @@ void RubikCubeSolve::photographPickPlace(int robotNum, geometry_msgs::PoseStampe
     }
 }
 
-void RubikCubeSolve::photographstep(int robotNum, int posePickPlace, int poseShoot, int pre_grasp_approach[], int post_grasp_retreat[], bool only_pick=false)
+// void RubikCubeSolve::photographstep(int robotNum, int posePickPlace, int poseShoot, int pre_grasp_approach[], int post_grasp_retreat[], bool only_pick=false)
+// {
+    // static int cnt=-1;
+    // // 流程
+    // // photographPickPlace(photographPose[posePick], true);
+    // photographPickPlace(robotNum, photographPose[posePickPlace], true, pre_grasp_approach, post_grasp_retreat);
+    // // 去到被拍摄位置
+    // setAndMove(getMoveGroup(robotNum), photographPose[poseShoot]);
+    // //point grab
+    // shoot(++cnt);
+    // setJoint6Value(getMoveGroup(robotNum), 180);
+    // shoot(++cnt);
+    // // 放置
+    // if(cnt == 6)
+    //     cnt = -1;
+    // if(!only_pick)
+    //     photographPickPlace(robotNum, photographPose[posePickPlace], false, pre_grasp_approach, post_grasp_retreat);
+// }
+
+void RubikCubeSolve::photographstep(int robotNum, int otherRobot, int photoNum)
 {
-    static int cnt=-1;
-    // 流程
-    // photographPickPlace(photographPose[posePick], true);
-    photographPickPlace(robotNum, photographPose[posePickPlace], true, pre_grasp_approach, post_grasp_retreat);
-    // 去到被拍摄位置
-    setAndMove(getMoveGroup(robotNum), photographPose[poseShoot]);
-    //point grab
-    shoot(++cnt);
+    setAndMove(getMoveGroup(robotNum), robotPose[robotNum][3]);
+    setAndMove(getMoveGroup(robotNum), robotPose[robotNum][6]);
+    setAndMove(getMoveGroup(otherRobot), robotPose[otherRobot][7]);
+    shoot(photoNum);
     setJoint6Value(getMoveGroup(robotNum), 180);
-    shoot(++cnt);
-    // 放置
-    if(cnt == 6)
-        cnt = -1;
-    if(!only_pick)
-        photographPickPlace(robotNum, photographPose[posePickPlace], false, pre_grasp_approach, post_grasp_retreat);
+    shoot(++photoNum);
+    setAndMove(getMoveGroup(otherRobot), robotPose[otherRobot][0]);
+
+    setAndMove(getMoveGroup(robotNum), robotPose[robotNum][3]);
+    geometry_msgs::PoseStamped pose = robotPose[robotNum][3];
+    pose.pose.position.y += pow(-1, robotNum)*prepare_some_distance;
+    setAndMove(getMoveGroup(robotNum), pose);
 }
 
 void RubikCubeSolve::shoot(int num)
@@ -222,34 +238,60 @@ void RubikCubeSolve::shoot(int num)
 // 拍照点位
 void RubikCubeSolve::photograph()
 {
-    move_group0.setNamedTarget("home0");
-    move_group1.setNamedTarget("home1");
-    loop_move(move_group0);
-    loop_move(move_group1);
-    // 
-    // 到达被拍照位置
-    setAndMove(move_group0, photographPose[4]);
-    ROS_INFO("photograph start....");
-    
-    int pre_grasp_approach0[3] = {0, 0, -1};
-    int post_grasp_retreat0[3] = {0, 0, 1};
-    photographstep(1, 0, 3, pre_grasp_approach0, post_grasp_retreat0);
-    ROS_INFO("photographstep(0, 3)....");
-
-    int pre_grasp_approach1[3] = {0, 0, -1};
-    int post_grasp_retreat1[3] = {0, 0, 1};
-    photographstep(1, 1, 3, pre_grasp_approach1, post_grasp_retreat1);
-    ROS_INFO("photographstep(1, 3)....");
-
     move_group1.setNamedTarget("home1");
     move_group1.move();
-    setEulerAngle(move_group1, 90, 0, 0, false);
-    setEulerAngle(move_group1, 0, -90, 0, false);
+    setAndMove(move_group1, photographPose[2]);
+    openGripper(move_group1);
+    robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
+    closeGripper(move_group1);
+    robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
+    goPreparePose();
+    shoot(0);
+    photographstep(1, 0, 1);
+    swop(getMoveGroup(1), getMoveGroup(0), robotPose[0][1]);
+    shoot(3);
+    photographstep(0, 1, 4);
 
-    int pre_grasp_approach2[3] = {0, -1, 0};
-    int post_grasp_retreat2[3] = {0, 0, 1};
-    photographstep(1, 2, 3, pre_grasp_approach2, post_grasp_retreat2, true);
-    ROS_INFO("photographstep(2, 3)....");
+    Cstate.captureRobot = 0;
+    Cstate.capturePoint = 1;
+    Cstate.canRotateFace1 = 3;
+    Cstate.canRotateFace2 = 1;
+    Adata.captureRobot = Cstate.captureRobot;
+    Adata.capturePoint = Cstate.capturePoint;
+    Adata.otherRobot = (Cstate.captureRobot + 1)%2;
+    geometry_msgs::PoseStamped pose = robotPose[Cstate.captureRobot][Cstate.capturePoint];
+    pose.pose.position.y += pow(-1, Cstate.captureRobot)*prepare_some_distance;
+    setAndMove(getMoveGroup(Cstate.captureRobot), pose);
+    setAndMove(getMoveGroup(Adata.otherRobot), robotPose[Adata.otherRobot][0]);
+
+    // move_group0.setNamedTarget("home0");
+    // move_group1.setNamedTarget("home1");
+    // loop_move(move_group0);
+    // loop_move(move_group1);
+    // // 
+    // // 到达被拍照位置
+    // setAndMove(move_group0, photographPose[4]);
+    // ROS_INFO("photograph start....");
+    
+    // int pre_grasp_approach0[3] = {0, 0, -1};
+    // int post_grasp_retreat0[3] = {0, 0, 1};
+    // photographstep(1, 0, 3, pre_grasp_approach0, post_grasp_retreat0);
+    // ROS_INFO("photographstep(0, 3)....");
+
+    // int pre_grasp_approach1[3] = {0, 0, -1};
+    // int post_grasp_retreat1[3] = {0, 0, 1};
+    // photographstep(1, 1, 3, pre_grasp_approach1, post_grasp_retreat1);
+    // ROS_INFO("photographstep(1, 3)....");
+
+    // move_group1.setNamedTarget("home1");
+    // move_group1.move();
+    // setEulerAngle(move_group1, 90, 0, 0, false);
+    // setEulerAngle(move_group1, 0, -90, 0, false);
+
+    // int pre_grasp_approach2[3] = {0, -1, 0};
+    // int post_grasp_retreat2[3] = {0, 0, 1};
+    // photographstep(1, 2, 3, pre_grasp_approach2, post_grasp_retreat2, true);
+    // ROS_INFO("photographstep(2, 3)....");
 }
 
 

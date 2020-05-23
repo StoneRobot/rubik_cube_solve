@@ -1,0 +1,12 @@
+header:
+  frame_id: /world
+pose:
+  position:
+    x: 0.442267
+    y: 0.54249
+    z: 1.6475
+  orientation:
+    x: -0.272953
+    y: -0.207746
+    z: -0.669215
+    w: 0.659158
