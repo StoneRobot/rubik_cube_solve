@@ -27,7 +27,7 @@ move_group1{group1}
     robotPose.resize(ROWS);
     robotPose[0].resize(COLUMNS);
     robotPose[1].resize(COLUMNS);
-    photographPose.resize(5);
+    
 
     double speed;
     nh.getParam("/rubik_cube_solve/speed", speed);
@@ -210,25 +210,29 @@ void RubikCubeSolve::photographPickPlace(int robotNum, geometry_msgs::PoseStampe
     //     photographPickPlace(robotNum, photographPose[posePickPlace], false, pre_grasp_approach, post_grasp_retreat);
 // }
 
-void RubikCubeSolve::photographstep(int robotNum, int otherRobot, int photoNum)
+void RubikCubeSolve::photographstepDoublePhoto(int photoNum, int capturePose, int talkPose)
 {
-    setAndMove(getMoveGroup(robotNum), robotPose[robotNum][3]);
-    setAndMove(getMoveGroup(robotNum), robotPose[robotNum][6]);
-    setAndMove(getMoveGroup(otherRobot), robotPose[otherRobot][7]);
-    shoot(photoNum);
-    setJoint6Value(getMoveGroup(robotNum), 180);
-    shoot(++photoNum);
-    setAndMove(getMoveGroup(otherRobot), robotPose[otherRobot][0]);
 
-    setAndMove(getMoveGroup(robotNum), robotPose[robotNum][3]);
-    geometry_msgs::PoseStamped pose = robotPose[robotNum][3];
-    pose.pose.position.y += pow(-1, robotNum)*prepare_some_distance;
-    setAndMove(getMoveGroup(robotNum), pose);
+    setAndMove(getMoveGroup(Adata.captureRobot), robotPose[Adata.captureRobot][3]);
+    
+    setAndMove(getMoveGroup(Adata.captureRobot), photographPose[capturePose]);
+
+    setAndMove(getMoveGroup(Adata.otherRobot), photographPose[talkPose]);
+
+    shoot(photoNum);
+    setJoint6Value(getMoveGroup(Adata.captureRobot), 180);
+    shoot(++photoNum);
+    setAndMove(getMoveGroup(Adata.otherRobot), robotPose[Adata.otherRobot][0]);
+
+    setAndMove(getMoveGroup(Adata.captureRobot), robotPose[Adata.captureRobot][3]);
+    geometry_msgs::PoseStamped pose = robotPose[Adata.captureRobot][Adata.capturePoint];
+    pose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
+    setAndMove(getMoveGroup(Adata.captureRobot), pose);
 }
 
 void RubikCubeSolve::shoot(int num)
 {
-    ROS_INFO_STREAM("shoot");
+    ROS_INFO_STREAM("shoot" << num);
     cubeParse::TakePhoto srv;
     srv.request.photoNum = num;
     shootClient.call(srv);
@@ -240,58 +244,34 @@ void RubikCubeSolve::photograph()
 {
     move_group1.setNamedTarget("home1");
     move_group1.move();
-    setAndMove(move_group1, photographPose[2]);
+    // 抓起魔方
+    setAndMove(move_group1, photographPose[0]);
     openGripper(move_group1);
     robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
     closeGripper(move_group1);
     robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
     goPreparePose();
+
+    setAndMove(move_group1, photographPose[1]);
+    setAndMove(move_group0, photographPose[2]);
     shoot(0);
-    photographstep(1, 0, 1);
-    swop(getMoveGroup(1), getMoveGroup(0), robotPose[0][1]);
+
+    setAndMove(move_group1, robotPose[1][0]);
+    setAndMove(move_group0, robotPose[0][0]);
+
+    photographstepDoublePhoto(1, 3, 4);
+
+    analyseData(3, 0);
+    swop(getMoveGroup(Adata.captureRobot), getMoveGroup(Adata.otherRobot), robotPose[Adata.captureRobot][Adata.capturePoint]);
+
+    setAndMove(move_group0, photographPose[5]);
+    setAndMove(move_group1, photographPose[6]);
     shoot(3);
-    photographstep(0, 1, 4);
 
-    Cstate.captureRobot = 0;
-    Cstate.capturePoint = 1;
-    Cstate.canRotateFace1 = 3;
-    Cstate.canRotateFace2 = 1;
-    Adata.captureRobot = Cstate.captureRobot;
-    Adata.capturePoint = Cstate.capturePoint;
-    Adata.otherRobot = (Cstate.captureRobot + 1)%2;
-    geometry_msgs::PoseStamped pose = robotPose[Cstate.captureRobot][Cstate.capturePoint];
-    pose.pose.position.y += pow(-1, Cstate.captureRobot)*prepare_some_distance;
-    setAndMove(getMoveGroup(Cstate.captureRobot), pose);
-    setAndMove(getMoveGroup(Adata.otherRobot), robotPose[Adata.otherRobot][0]);
+    setAndMove(move_group1, robotPose[1][0]);
+    setAndMove(move_group0, robotPose[0][0]);
 
-    // move_group0.setNamedTarget("home0");
-    // move_group1.setNamedTarget("home1");
-    // loop_move(move_group0);
-    // loop_move(move_group1);
-    // // 
-    // // 到达被拍照位置
-    // setAndMove(move_group0, photographPose[4]);
-    // ROS_INFO("photograph start....");
-    
-    // int pre_grasp_approach0[3] = {0, 0, -1};
-    // int post_grasp_retreat0[3] = {0, 0, 1};
-    // photographstep(1, 0, 3, pre_grasp_approach0, post_grasp_retreat0);
-    // ROS_INFO("photographstep(0, 3)....");
-
-    // int pre_grasp_approach1[3] = {0, 0, -1};
-    // int post_grasp_retreat1[3] = {0, 0, 1};
-    // photographstep(1, 1, 3, pre_grasp_approach1, post_grasp_retreat1);
-    // ROS_INFO("photographstep(1, 3)....");
-
-    // move_group1.setNamedTarget("home1");
-    // move_group1.move();
-    // setEulerAngle(move_group1, 90, 0, 0, false);
-    // setEulerAngle(move_group1, 0, -90, 0, false);
-
-    // int pre_grasp_approach2[3] = {0, -1, 0};
-    // int post_grasp_retreat2[3] = {0, 0, 1};
-    // photographstep(1, 2, 3, pre_grasp_approach2, post_grasp_retreat2, true);
-    // ROS_INFO("photographstep(2, 3)....");
+    photographstepDoublePhoto(4, 7, 8);
 }
 
 
@@ -504,22 +484,22 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
             setEulerAngle(move_group1, 0, -90, 0, false);
             int pre_grasp_approach[3] = {0, -1, 0};
             int post_grasp_retreat[3] = {0, 0, 1};
-            photographPickPlace(1, photographPose[2], true, pre_grasp_approach, post_grasp_retreat);
+            photographPickPlace(1, photographPose[0], true, pre_grasp_approach, post_grasp_retreat);
             goPreparePose();
         }
         else if(flag == 3)
         {
             // 測試機器人0的精度
-            ROS_INFO_STREAM("test 3");
-            geometry_msgs::PoseStamped pose;
-            move_group0.setNamedTarget("home0");
-            move_group0.move();
-            pose = photographPose[4];
-            pose.pose.position.y -= prepare_some_distance;
-            setAndMove(move_group0, pose);
-            openGripper(move_group0);
-            robotMoveCartesianUnit2(move_group0, 0, prepare_some_distance, 0);
-            closeGripper(move_group0);
+            // ROS_INFO_STREAM("test 3");
+            // geometry_msgs::PoseStamped pose;
+            // move_group0.setNamedTarget("home0");
+            // move_group0.move();
+            // pose = photographPose[0];
+            // pose.pose.position.y -= prepare_some_distance;
+            // setAndMove(move_group0, pose);
+            // openGripper(move_group0);
+            // robotMoveCartesianUnit2(move_group0, 0, prepare_some_distance, 0);
+            // closeGripper(move_group0);
         }
         else if(flag == 4)
         {
@@ -527,7 +507,7 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
             ROS_INFO_STREAM("test 4");
             move_group1.setNamedTarget("home1");
             move_group1.move();
-            setAndMove(move_group1, photographPose[2]);
+            setAndMove(move_group1, photographPose[0]);
             openGripper(move_group1);
             robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
             closeGripper(move_group1);
@@ -542,27 +522,27 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
         else if(flag == 6)
         {
             // 測試拿起魔方的動作
-            ROS_INFO_STREAM("test 6");
-            move_group1.setNamedTarget("home1");
-            move_group1.move();
-            geometry_msgs::PoseStamped pose;
-            pose = photographPose[0];
-            pose.pose.position.z = photographPose[0].pose.position.z - prepare_some_distance;
-            setAndMove(move_group1, photographPose[0]);
-            openGripper(move_group1);
-            // robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
-            closeGripper(move_group1);
+            // ROS_INFO_STREAM("test 6");
+            // move_group1.setNamedTarget("home1");
+            // move_group1.move();
+            // geometry_msgs::PoseStamped pose;
+            // pose = photographPose[0];
+            // pose.pose.position.z = photographPose[0].pose.position.z - prepare_some_distance;
+            // setAndMove(move_group1, photographPose[0]);
+            // openGripper(move_group1);
+            // // robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
+            // closeGripper(move_group1);
         }
         else if(flag == 7)
         {
             // 測試拿起魔方的動作
-            ROS_INFO_STREAM("test 7");
-            move_group1.setNamedTarget("home1");
-            move_group1.move();
-            setAndMove(move_group1, photographPose[0]);
-            openGripper(move_group1);
-            robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
-            closeGripper(move_group1);
+            // ROS_INFO_STREAM("test 7");
+            // move_group1.setNamedTarget("home1");
+            // move_group1.move();
+            // setAndMove(move_group1, photographPose[0]);
+            // openGripper(move_group1);
+            // robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
+            // closeGripper(move_group1);
         }
         else if(flag == 8)
         {
@@ -570,12 +550,17 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
             ROS_INFO_STREAM("test 8");
             move_group1.setNamedTarget("home1");
             move_group1.move();
-            setAndMove(move_group1, photographPose[2]);
+            setAndMove(move_group1, photographPose[0]);
             openGripper(move_group1);
             robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
             closeGripper(move_group1);
             robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
             goPreparePose();
+        }
+        else if(flag  == 9)
+        {
+            ROS_INFO_STREAM("test 9");
+            photograph();
         }
     }
     else
@@ -914,17 +899,14 @@ void RubikCubeSolve::loadPickPose()
     std::string path;
     YAML::Node doc;
     std::vector<std::string> pickPoseParam = {"/pick0_path", "/pick1_path", "/pick2_path",\
-                                            "/pick3_path", "/pick4_path"};
+                                            "/pick3_path", "/pick4_path", "/pick5_path", "/pick6_path", "/pick7_path", "pick8_path"};
+    photographPose.resize(pickPoseParam.size());
     for(int i=0; i < pickPoseParam.size(); ++i)
     {
         nh.getParam(pickPoseParam[i], path);
         doc = YAML::LoadFile(path);
         addData(photographPose[i], doc);
-        if(i < 2)
-        {
-            photographPose[i].pose.position.z += prepare_some_distance;
-        }
-        else if(i == 2)
+        if(i == 0)
         {
             photographPose[i].pose.position.y += prepare_some_distance;
         }

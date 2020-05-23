@@ -135,7 +135,7 @@ public:
     void photograph();
     void photographPickPlace(int robotNum, geometry_msgs::PoseStamped& pose, bool isPick, int pre_grasp_approach[], int post_grasp_retreat[]);
     // void photographstep(int robotNum, int posePick, int poseShoot, int pre_grasp_approach[], int post_grasp_retreat[], bool only_pick);
-    void photographstep(int robotNum, int otherRobot, int photoNum);
+    void photographstepDoublePhoto(int photoNum, int capturePose, int talkPose);
     void shoot(int num=0);
     void stopMove();
     void spin();
