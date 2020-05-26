@@ -15,8 +15,7 @@ double angle2rad(double& angle)
 }
 
 
-void addCollisionObjects(moveit::planning_interface::PlanningSceneInterface& planning_scene_interface, 
-ros::Publisher planning_scene_diff_publisher,\
+void addCollisionObjects(ros::Publisher& planning_scene_diff_publisher, moveit_msgs::PlanningScene& p,
 double sx, double sy, double sz,\
 double px, double py, double pz, \
 double ox, double oy, double oz, \
@@ -47,9 +46,12 @@ std::string frame_id, std::string id)
 
     collision_objects[0].operation = collision_objects[0].ADD;
 
-    planning_scene_interface.applyCollisionObjects(collision_objects);
-    moveit_msgs::PlanningScene p;
+    // planning_scene_interface.applyCollisionObjects(collision_objects);
+
+
+    p.world.collision_objects.push_back(collision_objects[0]);
     p.is_diff = true;
+    p.robot_state.is_diff = true;
     // p.object_colors.push_back();
     planning_scene_diff_publisher.publish(p);
 }
