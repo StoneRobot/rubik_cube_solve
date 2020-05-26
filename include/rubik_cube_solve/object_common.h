@@ -16,6 +16,7 @@ double angle2rad(double& angle)
 
 
 void addCollisionObjects(moveit::planning_interface::PlanningSceneInterface& planning_scene_interface, 
+ros::Publisher planning_scene_diff_publisher,\
 double sx, double sy, double sz,\
 double px, double py, double pz, \
 double ox, double oy, double oz, \
@@ -47,7 +48,10 @@ std::string frame_id, std::string id)
     collision_objects[0].operation = collision_objects[0].ADD;
 
     planning_scene_interface.applyCollisionObjects(collision_objects);
-
+    moveit_msgs::PlanningScene p;
+    p.is_diff = true;
+    // p.object_colors.push_back();
+    planning_scene_diff_publisher.publish(p);
 }
 
 void addCollisionObjects(std::vector<moveit_msgs::CollisionObject> &collision_objects_group,
