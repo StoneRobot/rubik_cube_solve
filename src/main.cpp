@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     moveit::planning_interface::MoveGroupInterface move_group0("arm0");
     moveit::planning_interface::MoveGroupInterface move_group1("arm1");
     RubikCubeSolve r(nh, move_group0, move_group1);
-    r.spin();
+    // r.spin();
     ros::waitForShutdown();
 
 //    robotMoveCartesianUnit(move_group1, 0, 0, 0.02);

@@ -54,6 +54,7 @@ std::string frame_id, std::string id)
     p.robot_state.is_diff = true;
     // p.object_colors.push_back();
     planning_scene_diff_publisher.publish(p);
+    ros::Duration(1).sleep();
 }
 
 void addCollisionObjects(std::vector<moveit_msgs::CollisionObject> &collision_objects_group,

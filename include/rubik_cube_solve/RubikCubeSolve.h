@@ -7,6 +7,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <std_srvs/Empty.h>
 #include <std_msgs/Int8MultiArray.h>
+#include <std_msgs/Bool.h>
 
 
 #include "rubik_cube_solve/rubik_cube_solve_cmd.h"
@@ -16,7 +17,8 @@
 #include "hirop_msgs/closeGripper.h"
 #include "cubeParse/TakePhoto.h"
 #include "cubeParse/SolveCube.h"
-#include "std_msgs/Bool.h"
+#include "rb_msgAndSrv/rb_DoubleBool.h"
+#include "rb_msgAndSrv/rb_ArrayAndBool.h"
 
 #include <vector>
 #include <iostream>
@@ -138,15 +140,12 @@ public:
     void photographstepDoublePhoto(int photoNum, int capturePose, int talkPose);
     void shoot(int num=0);
     void stopMove();
-    void spin();
+    void spinOnce();
     void robotMoveCartesianUnit2(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z);
     moveit::planning_interface::MoveGroupInterface& getMoveGroup(int num);
     void placeCube();
     bool recordPose(int robotNum, std::string name, bool isJointSpace);
-/////////////////////////
-    int calibration();
-    void pickPose();
-////////////////////////
+
 private:
     void getPrepareSomeDistanceRobotPose();
 
@@ -173,6 +172,11 @@ private:
     ros::ServiceServer goToPose;
     bool goToPoseServer(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
 
+    ros::ServiceServer beginSolve;
+    bool rbRunCommand(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep);
+
+    
+
     ros::ServiceClient receiveSolve;
     ros::ServiceClient shootClient;
     ros::ServiceClient openGripper_client0;
@@ -180,9 +184,10 @@ private:
     ros::ServiceClient openGripper_client1;
     ros::ServiceClient closeGripper_client1;
 
-    ros::Subscriber beginSolve;
-    void beginSolve_sub(const std_msgs::BoolConstPtr& msg);
+    // ros::Subscriber beginSolve;
+    // void beginSolve_sub(const std_msgs::BoolConstPtr& msg);
     bool isBegingSolve = false;
+    int runModel = 0;
 
     ros::Subscriber rubikCubeSolveData_sub;
     void rubikCubeSolveDataCallBack(const std_msgs::Int8MultiArrayConstPtr& msg);

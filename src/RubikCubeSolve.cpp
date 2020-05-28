@@ -13,9 +13,11 @@ move_group1{group1}
     record_pose = nh.advertiseService("record_pose", &RubikCubeSolve::recordPoseCallBack, this);
     goToPose = nh.advertiseService("go_to_pose", &RubikCubeSolve::goToPoseServer, this);
     stop_move = nh.advertiseService("exit_move", &RubikCubeSolve::sotpMoveCallBack, this);
-    // ServiceServer = nh.advertiseService("/Rb_runCommand", &RubikCubeSolve::rbRunCommand, this);
 
-    beginSolve = nh.subscribe("beginSolve", 20, &RubikCubeSolve::beginSolve_sub, this);
+    beginSolve = nh.advertiseService("/Rb_AutoSolveMagic", &RubikCubeSolve::rbRunCommand, this);
+
+    // beginSolve = nh.subscribe("beginSolve", 20, &RubikCubeSolve::beginSolve_sub, this);
+    
     rubikCubeSolveData_sub = nh.subscribe("cube_solution", 100, &RubikCubeSolve::rubikCubeSolveDataCallBack, this);
 
     openGripper_client0 = nh.serviceClient<hirop_msgs::openGripper>("/UR51/openGripper");
@@ -70,13 +72,27 @@ bool RubikCubeSolve::goToPoseServer(rubik_cube_solve::recordPoseStamped::Request
     return true;
 }
 
-void RubikCubeSolve::beginSolve_sub(const std_msgs::BoolConstPtr& msg)
+// void RubikCubeSolve::beginSolve_sub(const std_msgs::BoolConstPtr& msg)
+// {
+//     if(isBegingSolve != true)
+//     {
+//         isBegingSolve = true;
+//     }
+// }
+
+bool RubikCubeSolve::rbRunCommand(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep)
 {
+    nh.setParam("/isRuning_solveMagic", true);
     if(isBegingSolve != true)
     {
         isBegingSolve = true;
     }
+    runModel = req.data[0];
+    spinOnce();
+    rep.respond = true;
+    return true;
 }
+
 
 void RubikCubeSolve::rubikCubeSolveDataCallBack(const std_msgs::Int8MultiArrayConstPtr& msg)
 {
@@ -281,7 +297,15 @@ void RubikCubeSolve::placeCube()
     move_group1.setNamedTarget("home1");
     loop_move(move_group0);
     loop_move(move_group1);
-    setAndMove(getMoveGroup(Adata.captureRobot), photographPose[0]);
+    geometry_msgs::PoseStamped placeCubePose = photographPose[0];
+    tf2::Quaternion orientation;
+    orientation.setRPY(0, 1.57, 0);
+    placeCubePose.pose.orientation = tf2::toMsg(orientation);
+    if(Adata.captureRobot == 0)
+    {
+        placeCubePose.pose.position.y -= 0.25;
+    }
+    setAndMove(getMoveGroup(Adata.captureRobot), placeCubePose);
     // setEndEffectorPositionTarget(getMoveGroup(Adata.captureRobot), prepare_some_distance, 0, 0);
     robotMoveCartesianUnit2(getMoveGroup(Adata.captureRobot), 0, 0, -prepare_some_distance);
     openGripper(getMoveGroup(Adata.captureRobot));
@@ -291,6 +315,7 @@ void RubikCubeSolve::placeCube()
     move_group1.setNamedTarget("home1");
     loop_move(move_group0);
     loop_move(move_group1);
+    nh.setParam("/isRuning_solveMagic", false);
 }
 
 
@@ -333,29 +358,7 @@ void RubikCubeSolve::setOrientationConstraints(moveit::planning_interface::MoveG
     ROS_INFO_STREAM(cnt);
 }
 
-// void RubikCubeSolve::setOrientationConstraintsEular(moveit::planning_interface::MoveGroupInterface& move_group, \
-//                                 double A,double B,double C)
-// {
-//     // setJointConstraints(move_group);
-//     static int cnt = 0;
-//     moveit_msgs::OrientationConstraint ocm;
-//     ocm.link_name = move_group.getEndEffectorLink();
-//     ocm.header.frame_id = "world";
-//     ocm.orientation = move_group.getCurrentPose().pose.orientation;
 
-//     // ROS_INFO_STREAM(move_group.getCurrentPose());
-//     tf::Quaternion d=  tf::createQuaternionFromRPY(A, B ,C);
-//     ocm.orientation.w
-//     ocm.absolute_y_axis_tolerance = y_axis_tolerance;
-//     ocm.absolute_z_axis_tolerance = z_axis_tolerance;
-//     ocm.weight = 1.0;
-//     moveit_msgs::Constraints con;
-//     con.orientation_constraints.push_back(ocm);
-//     move_group.setPathConstraints(con);
-//     move_group.setPlanningTime(5.0);
-//     cnt ++;
-//     ROS_INFO_STREAM(cnt);
-// }
 
 
 void RubikCubeSolve::setPositionConstraints(moveit::planning_interface::MoveGroupInterface& move_group)
@@ -489,17 +492,28 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
         }
         else if(flag == 3)
         {
-            // 測試機器人0的精度
-            // ROS_INFO_STREAM("test 3");
-            // geometry_msgs::PoseStamped pose;
-            // move_group0.setNamedTarget("home0");
-            // move_group0.move();
-            // pose = photographPose[0];
-            // pose.pose.position.y -= prepare_some_distance;
-            // setAndMove(move_group0, pose);
-            // openGripper(move_group0);
-            // robotMoveCartesianUnit2(move_group0, 0, prepare_some_distance, 0);
-            // closeGripper(move_group0);
+            // 测试魔方解算数据
+            cubeParse::SolveCube srv;
+            receiveSolve.call(srv);
+            goPreparePose();
+            int cnt = 1;
+            for(auto it: rubikCubeSolvetransformData)
+            {
+                ROS_INFO_STREAM("step: " << cnt << " " << it[0] << " " << it[1]);
+                cnt ++;
+            }
+            cnt = 1;
+            for(int i=0; i<rubikCubeSolvetransformData.size(); ++i)
+            {
+                ROS_INFO("step: %d, count: %d",cnt, rubikCubeSolvetransformData.size());
+                cnt ++;
+                analyseData(rubikCubeSolvetransformData[i][0], rubikCubeSolvetransformData[i][1]);
+                action();
+            }
+            std::vector<std::vector<int> >().swap(rubikCubeSolvetransformData);
+            Cstate.isFinish = true;
+            placeCube();
+            isBegingSolve = false;
         }
         else if(flag == 4)
         {
@@ -686,28 +700,41 @@ void RubikCubeSolve::analyseData(int face, int angle)
 }
 
 // 主循环***
-void RubikCubeSolve::spin()
+void RubikCubeSolve::spinOnce()
 {
-    while (ros::ok())
+
+    if(isBegingSolve)
     {
-        if(isBegingSolve ==  true)
+        if(runModel == 1 || runModel == 4)
         {
             ROS_INFO("start");
             photograph();
             ros::Duration(1.0).sleep();
+        }
+        if(runModel == 2 || runModel == 4)
+        {
+            ROS_INFO("get solve data");
             cubeParse::SolveCube srv;
-            // receiveSolve.call(srv);
+            receiveSolve.call(srv);
+        }
+        if(runModel == 3 || runModel == 4)
+        {
+            ROS_INFO("begin solve .....");
             goPreparePose();
+            int cnt = 1;
             for(int i=0; i<rubikCubeSolvetransformData.size(); ++i)
             {
+                ROS_INFO("step: %d, count: %d",cnt, rubikCubeSolvetransformData.size());
                 analyseData(rubikCubeSolvetransformData[i][0], rubikCubeSolvetransformData[i][1]);
                 action();
+                cnt ++;
             }
             std::vector<std::vector<int> >().swap(rubikCubeSolvetransformData);
             Cstate.isFinish = true;
             placeCube();
-            isBegingSolve = false;
         }
+        isBegingSolve = false;
+        runModel = 0;
     }
 }
 //TODO 抓取 拧魔方
@@ -1301,7 +1328,3 @@ void RubikCubeSolve::robotMoveCartesianUnit2(moveit::planning_interface::MoveGro
     group.execute(plan);
 }
 //////////////////////////////////////////////////////////////////////
-int RubikCubeSolve::calibration()
-{
-
-}
