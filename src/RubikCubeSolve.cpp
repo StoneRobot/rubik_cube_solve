@@ -14,7 +14,7 @@ move_group1{group1}
     goToPose = nh.advertiseService("go_to_pose", &RubikCubeSolve::goToPoseServer, this);
     stop_move = nh.advertiseService("exit_move", &RubikCubeSolve::sotpMoveCallBack, this);
 
-    beginSolve = nh.advertiseService("/Rb_AutoSolveMagic", &RubikCubeSolve::rbRunCommand, this);
+    beginSolve = nh.advertiseService("/MagicStepRunCommand", &RubikCubeSolve::rbRunCommand, this);
 
     // beginSolve = nh.subscribe("beginSolve", 20, &RubikCubeSolve::beginSolve_sub, this);
     
@@ -46,6 +46,7 @@ move_group1{group1}
     initPose();
     Cstate.isFinish = true;
     isBegingSolve = false;
+    isStop = false;
 }
 
 
@@ -154,11 +155,7 @@ void RubikCubeSolve::stopMove()
 {
     move_group0.stop();
     move_group1.stop();
-    system("rosservice call /UR51/set_robot_enable 'enable: false'");
-    system("rosservice call /UR52/set_robot_enable 'enable: false'");
-    system("rosservice call /UR51/clear_robot_fault '{}'");
-    system("rosservice call /UR52/clear_robot_fault '{}'");
-    exit(0);
+
 }
 
 void RubikCubeSolve::goPreparePose()
@@ -1033,14 +1030,32 @@ moveit::planning_interface::MoveItErrorCode RubikCubeSolve::setAndMove(moveit::p
 moveit::planning_interface::MoveItErrorCode RubikCubeSolve::moveGroupPlanAndMove(moveit::planning_interface::MoveGroupInterface& move_group, \
                                                                 moveit::planning_interface::MoveGroupInterface::Plan& my_plan)
 {
-    while (ros::ok())
+    int cnt = 0;
+    moveit::planning_interface::MoveItErrorCode code;
+    do
     {
-        if(move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS)
-        {
-            break;
-        }
+        code = move_group.plan(my_plan);
     }
-    return loop_move(move_group);
+    while (ros::ok() && cnt < 10 && code.val != moveit::planning_interface::MoveItErrorCode::SUCCESS && !isStop);
+    if(code.val == moveit::planning_interface::MoveItErrorCode::SUCCESS && !isStop)
+    {
+        code = loop_move(move_group);
+    }
+    return code;
+}
+
+moveit::planning_interface::MoveItErrorCode RubikCubeSolve::loop_move(moveit::planning_interface::MoveGroupInterface& move_group)
+{
+    int cnt = 0;
+    moveit::planning_interface::MoveItErrorCode code;
+    do
+    {
+        ROS_INFO_STREAM("loop_move");
+        code = move_group.move();
+        cnt ++;
+    }
+    while (ros::ok() && cnt < 10 && code.val == moveit::planning_interface::MoveItErrorCode::TIMED_OUT && !isStop==false);
+    return code;
 }
 
 geometry_msgs::PoseStamped RubikCubeSolve::setEulerAngle(moveit::planning_interface::MoveGroupInterface& move_group, double x, double y, double z, bool radian=true)
@@ -1162,7 +1177,7 @@ void RubikCubeSolve::setJoint6Value(moveit::planning_interface::MoveGroupInterfa
 
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
     moveGroupPlanAndMove(move_group, my_plan);
-     while (ros::ok())
+     while (ros::ok() && !isStop)
      {
          if(move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS)
          {
@@ -1262,18 +1277,7 @@ bool RubikCubeSolve::writePoseOnceFile(const std::string& name, const geometry_m
     fout.close();
 }
 
-moveit::planning_interface::MoveItErrorCode RubikCubeSolve::loop_move(moveit::planning_interface::MoveGroupInterface& move_group)
-{
-    int cnt = 0;
-    moveit::planning_interface::MoveItErrorCode code;
-    do
-    {
-        code = move_group.move();
-        cnt ++;
-    }
-    while (ros::ok() && cnt < 10 && code.val == moveit::planning_interface::MoveItErrorCode::TIMED_OUT);
-    return code;
-}
+
 
 void RubikCubeSolve::example()
 {
@@ -1325,6 +1329,7 @@ void RubikCubeSolve::robotMoveCartesianUnit2(moveit::planning_interface::MoveGro
     while( group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory) < 1.0);
     moveit::planning_interface::MoveGroupInterface::Plan plan;
     plan.trajectory_ = trajectory;
-    group.execute(plan);
+    if(!isStop)
+        group.execute(plan);
 }
 //////////////////////////////////////////////////////////////////////

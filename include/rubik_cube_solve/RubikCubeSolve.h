@@ -204,4 +204,5 @@ private:
     const double rubikCubeAdd = 0.0095;
     const int UP = 1;
     const int down = 2;
+    bool isStop;
 };
