@@ -145,7 +145,7 @@ public:
     moveit::planning_interface::MoveGroupInterface& getMoveGroup(int num);
     void placeCube();
     bool recordPose(int robotNum, std::string name, bool isJointSpace);
-
+    void backHome(int robot);
 private:
     void getPrepareSomeDistanceRobotPose();
 
@@ -167,15 +167,16 @@ private:
     bool endEffectorPoseCallBack(rubik_cube_solve::end_effector_motion::Request& req, rubik_cube_solve::end_effector_motion::Response& rep);
     ros::ServiceServer record_pose;
     bool recordPoseCallBack(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
-    ros::ServiceServer stop_move;
-    bool sotpMoveCallBack(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
+    // ros::ServiceServer stop_move;
+    // bool sotpMoveCallBack(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
     ros::ServiceServer goToPose;
     bool goToPoseServer(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
 
     ros::ServiceServer beginSolve;
     bool rbRunCommand(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep);
 
-    
+    ros::Subscriber stopMoveSub;
+    void sotpMoveCallback(const std_msgs::Bool::ConstPtr& msg);
 
     ros::ServiceClient receiveSolve;
     ros::ServiceClient shootClient;
