@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-
+#include <string>
 #include "rubik_cube_solve/object_common.h"
 
 
@@ -14,12 +14,14 @@ int main(int argc, char *argv[])
         ros::Duration(0.5).sleep();
     }
     moveit_msgs::PlanningScene p;
+    bool isInvisible;
+    std::istringstream(argv[12]) >> std::boolalpha >> isInvisible;
     if(argc == 13)
         addCollisionObjects(planning_scene_diff_publisher, p,
         atof(argv[1]), atof(argv[2]), atof(argv[3]), 
         atof(argv[4]), atof(argv[5]), atof(argv[6]), 
         atof(argv[7]), atof(argv[8]), atof(argv[9]), 
-        argv[10], argv[11], argv[12]);
+        argv[10], argv[11], isInvisible);
     else if(argc == 12)
         addCollisionObjects(planning_scene_diff_publisher, p,
         atof(argv[1]), atof(argv[2]), atof(argv[3]), 

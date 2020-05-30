@@ -10,7 +10,8 @@
     <include file="$(find rubik_cube_solve)/launch/load_pose_path.launch" />
 
     <param name="/move_group/trajectory_execution/execution_duration_monitoring" type="bool" value="false" />
-                                
+
+    <param name="isRuning_solveMagic" type="bool" value="false" />             
 
     <node pkg="rubik_cube_solve" type="RubikCubeSolve" name="rubik_cube_solve" output="screen" >
         <param name="is_load_pose" type="bool" value="$(arg is_load_pose)" />
