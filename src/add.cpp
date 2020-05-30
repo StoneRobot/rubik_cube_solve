@@ -14,11 +14,18 @@ int main(int argc, char *argv[])
         ros::Duration(0.5).sleep();
     }
     moveit_msgs::PlanningScene p;
-    addCollisionObjects(planning_scene_diff_publisher, p,
-    atof(argv[1]), atof(argv[2]), atof(argv[3]), 
-    atof(argv[4]), atof(argv[5]), atof(argv[6]), 
-    atof(argv[7]), atof(argv[8]), atof(argv[9]), 
-    argv[10], argv[11]);
+    if(argc == 13)
+        addCollisionObjects(planning_scene_diff_publisher, p,
+        atof(argv[1]), atof(argv[2]), atof(argv[3]), 
+        atof(argv[4]), atof(argv[5]), atof(argv[6]), 
+        atof(argv[7]), atof(argv[8]), atof(argv[9]), 
+        argv[10], argv[11], argv[12]);
+    else if(argc == 12)
+        addCollisionObjects(planning_scene_diff_publisher, p,
+        atof(argv[1]), atof(argv[2]), atof(argv[3]), 
+        atof(argv[4]), atof(argv[5]), atof(argv[6]), 
+        atof(argv[7]), atof(argv[8]), atof(argv[9]), 
+        argv[10], argv[11]);
     // ros::waitForShutdown();
     return 0;
 }

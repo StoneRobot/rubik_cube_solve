@@ -19,7 +19,7 @@ void addCollisionObjects(ros::Publisher& planning_scene_diff_publisher, moveit_m
 double sx, double sy, double sz,\
 double px, double py, double pz, \
 double ox, double oy, double oz, \
-std::string frame_id, std::string id)
+std::string frame_id, std::string id, bool isInvisible=false)
 {
 
     std::vector<moveit_msgs::CollisionObject> collision_objects;
@@ -52,7 +52,14 @@ std::string frame_id, std::string id)
     p.world.collision_objects.push_back(collision_objects[0]);
     p.is_diff = true;
     p.robot_state.is_diff = true;
-    // p.object_colors.push_back();
+    
+    if(isInvisible)
+    {
+        moveit_msgs::ObjectColor color;
+        color.color.a = 0;
+        color.id = collision_objects[0].id;
+        p.object_colors.push_back(color);
+    }
     planning_scene_diff_publisher.publish(p);
     ros::Duration(1).sleep();
 }
