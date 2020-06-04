@@ -16,7 +16,7 @@ k = 0
 client.call(0, 0)
 while not rospy.is_shutdown():
     for j in [90, -90, 180]:
-        for i in [2, 1]:
+        for i in [2, 1, 3, 4, 5, 6]:
             # i = random.randint(1, 6)
             # if k == i:
             #     continue

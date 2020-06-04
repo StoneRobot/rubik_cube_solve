@@ -202,25 +202,6 @@ void RubikCubeSolve::photographPickPlace(int robotNum, geometry_msgs::PoseStampe
     }
 }
 
-// void RubikCubeSolve::photographstep(int robotNum, int posePickPlace, int poseShoot, int pre_grasp_approach[], int post_grasp_retreat[], bool only_pick=false)
-// {
-    // static int cnt=-1;
-    // // 流程
-    // // photographPickPlace(photographPose[posePick], true);
-    // photographPickPlace(robotNum, photographPose[posePickPlace], true, pre_grasp_approach, post_grasp_retreat);
-    // // 去到被拍摄位置
-    // setAndMove(getMoveGroup(robotNum), photographPose[poseShoot]);
-    // //point grab
-    // shoot(++cnt);
-    // setJoint6Value(getMoveGroup(robotNum), 180);
-    // shoot(++cnt);
-    // // 放置
-    // if(cnt == 6)
-    //     cnt = -1;
-    // if(!only_pick)
-    //     photographPickPlace(robotNum, photographPose[posePickPlace], false, pre_grasp_approach, post_grasp_retreat);
-// }
-
 void RubikCubeSolve::photographstepDoublePhoto(int photoNum, int capturePose, int talkPose)
 {
 
@@ -277,9 +258,10 @@ void RubikCubeSolve::photograph()
     photographstepDoublePhoto(1, 3, 4);
 
     analyseData(3, 0);
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // swop(getMoveGroup(Adata.captureRobot), getMoveGroup(Adata.otherRobot), robotPose[Adata.captureRobot][Adata.capturePoint]);
+    swop(getMoveGroup(Adata.captureRobot), getMoveGroup(Adata.otherRobot), robotPose[Adata.captureRobot][Adata.capturePoint]);
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////待优化的流程, 用于拍照时交换魔方///////////////////////////////////////////////////////////////////////
     // openGripper(getMoveGroup(Adata.captureRobot));
     // setAndMove(getMoveGroup(Adata.captureRobot), photographPose[1]);
     // // 到达
