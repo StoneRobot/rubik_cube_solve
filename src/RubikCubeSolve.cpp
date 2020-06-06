@@ -614,13 +614,13 @@ void RubikCubeSolve::analyseData(int face, int angle)
         switch (face)
         {
             case 1:
-                Adata.capturePoint = Cstate.capturePoint % 4 + 1;
+                Adata.capturePoint = (Cstate.capturePoint + 1) % 4 + 1;
                 Adata.space = 2;
                 Cstate.canRotateFace1 = Adata.capturePoint + 2;
                 Cstate.canRotateFace2 = 1;
                 break;
             case 2:
-                Adata.capturePoint = Cstate.capturePoint % 4 + 1;;
+                Adata.capturePoint = (Cstate.capturePoint + 1) % 4 + 1;
                 Adata.space = 2;
                 Cstate.canRotateFace1 = Adata.capturePoint + 2;
                 Cstate.canRotateFace2 = 2;

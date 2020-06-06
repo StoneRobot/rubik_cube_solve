@@ -9,7 +9,7 @@
     <param name="pose_data1_path" type="str" value="$(find rubik_cube_solve)/cfg/pose_data1.yaml" />
     <include file="$(find rubik_cube_solve)/launch/load_pose_path.launch" />
 
-    <param name="/move_group/trajectory_execution/execution_duration_monitoring" type="bool" value="false" />
+    <param name="/move_group/trajectory_execution/execution_duration_monitoring" type="bool" value="true" />
 
     <param name="isRuning_solveMagic" type="bool" value="false" />             
 
