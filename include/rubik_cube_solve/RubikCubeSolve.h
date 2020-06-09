@@ -146,37 +146,36 @@ public:
     void placeCube();
     bool recordPose(int robotNum, std::string name, bool isJointSpace);
     void backHome(int robot);
+    bool setRobotEnable();
 private:
     void getPrepareSomeDistanceRobotPose();
 
     inline void getPrepareSomeDistance(std::vector<std::vector<geometry_msgs::PoseStamped> >& pose, int row, int column);
-    void fakeInitializationState();
+    void InitializationState();
+    bool InitializationStateAction();
+    void transformData();
 
-    std::vector<std::vector<geometry_msgs::PoseStamped> > robotPose;
-    const int ROWS = 2;
-    const int COLUMNS = 8;
-
-    std::vector<geometry_msgs::PoseStamped> photographPose;
-    moveit::planning_interface::MoveGroupInterface& move_group0;
-    moveit::planning_interface::MoveGroupInterface& move_group1;
-
-    ros::NodeHandle nh;
-    ros::ServiceServer analyseCmd;
     bool analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Request& req, rubik_cube_solve::rubik_cube_solve_cmd::Response& rep);
-    ros::ServiceServer end_effector;
     bool endEffectorPoseCallBack(rubik_cube_solve::end_effector_motion::Request& req, rubik_cube_solve::end_effector_motion::Response& rep);
-    ros::ServiceServer record_pose;
     bool recordPoseCallBack(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
-    // ros::ServiceServer stop_move;
-    // bool sotpMoveCallBack(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
-    ros::ServiceServer goToPose;
     bool goToPoseServer(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
-
-    ros::ServiceServer beginSolve;
     bool rbRunCommand(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep);
 
-    ros::Subscriber stopMoveSub;
+    // bool placeCubeCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
+    bool placeCubeCallback(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep);
+
     void sotpMoveCallback(const std_msgs::Bool::ConstPtr& msg);
+    void rubikCubeSolveDataCallBack(const std_msgs::Int8MultiArrayConstPtr& msg);
+
+    ros::ServiceServer analyseCmd;
+    ros::ServiceServer end_effector;
+    ros::ServiceServer record_pose;
+    ros::ServiceServer goToPose;
+    ros::ServiceServer beginSolve;
+    ros::ServiceServer placeCubeServer;
+
+    ros::Subscriber stopMoveSub;
+    ros::Subscriber rubikCubeSolveData_sub;
 
     ros::ServiceClient receiveSolve;
     ros::ServiceClient shootClient;
@@ -185,16 +184,18 @@ private:
     ros::ServiceClient openGripper_client1;
     ros::ServiceClient closeGripper_client1;
 
-    // ros::Subscriber beginSolve;
-    // void beginSolve_sub(const std_msgs::BoolConstPtr& msg);
-    bool isBegingSolve = false;
-    int runModel = 0;
-
-    ros::Subscriber rubikCubeSolveData_sub;
-    void rubikCubeSolveDataCallBack(const std_msgs::Int8MultiArrayConstPtr& msg);
-    void transformData();
     std::vector<int> rubikCubeSolveData;
     std::vector<std::vector<int> > rubikCubeSolvetransformData;
+
+    ros::NodeHandle nh;
+
+    std::vector<geometry_msgs::PoseStamped> photographPose;
+    moveit::planning_interface::MoveGroupInterface& move_group0;
+    moveit::planning_interface::MoveGroupInterface& move_group1;
+
+    std::vector<std::vector<geometry_msgs::PoseStamped> > robotPose;
+    const int ROWS = 2;
+    const int COLUMNS = 8;
 
     RecordPoseData data0;
     RecordPoseData data1;
@@ -205,5 +206,13 @@ private:
     const double rubikCubeAdd = 0.0095;
     const int UP = 1;
     const int down = 2;
+
+    int runModel = 0;
+
     bool isStop;
+    bool isBegingSolve = false;
+    bool isPlaceCube = false;
+    bool isSwopOver = false;
+    bool isTest = false;
+    bool placeCubeRobot;
 };
