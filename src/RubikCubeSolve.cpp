@@ -32,9 +32,10 @@ move_group1{group1}
 
     double speed;
     nh.getParam("/rubik_cube_solve/speed", speed);
-
-    move_group0.setMaxAccelerationScalingFactor(0.05);
-    move_group1.setMaxAccelerationScalingFactor(0.05);
+    // move_group0.setPlanningTime(0.01);
+    // move_group1.setPlanningTime(0.01);
+    move_group0.setMaxAccelerationScalingFactor(0.1);
+    move_group1.setMaxAccelerationScalingFactor(0.1);
     move_group0.setMaxVelocityScalingFactor(speed);
     move_group1.setMaxVelocityScalingFactor(speed);
     move_group0.setGoalPositionTolerance(0.0001);
@@ -727,10 +728,10 @@ void RubikCubeSolve::spinOnce()
                 analyseData(rubikCubeSolvetransformData[i][0], rubikCubeSolvetransformData[i][1]);
                 action();
                 cnt ++;
-                if(cnt % 10 == 0)
-                {
-                    setRobotEnable();
-                }
+                // if(cnt % 10 == 0)
+                // {
+                //     setRobotEnable();
+                // }
             }
             std::vector<std::vector<int> >().swap(rubikCubeSolvetransformData);
             Cstate.isFinish = true;

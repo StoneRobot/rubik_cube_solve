@@ -4,7 +4,7 @@
     <arg name="prepare_some_distance" default="0.05" />
     <arg name="record_pose_path" default="$(find rubik_cube_solve)" />
     <arg name="test" default="8" />
-    <arg name="speed" default="0.1" />
+    <arg name="speed" default="1" />
     <param name="pose_data0_path" type="str" value="$(find rubik_cube_solve)/cfg/pose_data0.yaml" />
     <param name="pose_data1_path" type="str" value="$(find rubik_cube_solve)/cfg/pose_data1.yaml" />
     <include file="$(find rubik_cube_solve)/launch/load_pose_path.launch" />
