@@ -153,7 +153,7 @@ void RubikCubeSolve::transformData()
             face = 2;
         }
         rubikCubeSolvetransformData[i][0] = face;
-        ROS_INFO_STREAM("face: " << rubikCubeSolvetransformData[i][0] << "angle: " <<rubikCubeSolvetransformData[i][1]);
+        ROS_INFO_STREAM("face: " << rubikCubeSolvetransformData[i][0] << ", angle: " <<rubikCubeSolvetransformData[i][1]);
     }
     std::vector<int>().swap(rubikCubeSolveData);
 }
