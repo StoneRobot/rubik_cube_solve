@@ -15,6 +15,7 @@ move_group1{group1}
     beginSolve = nh.advertiseService("/MagicStepRunCommand", &RubikCubeSolve::rbRunCommand, this);
     placeCubeServer = nh.advertiseService("/placeMagicCube", &RubikCubeSolve::placeCubeCallback, this);
 
+    progressPub = nh.advertise<std_msgs::Int8MultiArray>("progress_rbSolveMagic", 10);
 
     stopMoveSub = nh.subscribe("/stop_move", 1, &RubikCubeSolve::sotpMoveCallback, this);
     rubikCubeSolveData_sub = nh.subscribe("cube_solution", 100, &RubikCubeSolve::rubikCubeSolveDataCallBack, this);
