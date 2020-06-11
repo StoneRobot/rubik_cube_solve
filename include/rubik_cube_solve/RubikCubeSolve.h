@@ -143,6 +143,7 @@ public:
     void spinOnce();
     void robotMoveCartesianUnit2(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z);
     moveit::planning_interface::MoveGroupInterface& getMoveGroup(int num);
+    int getMoveGroupNum(moveit::planning_interface::MoveGroupInterface& move_group);
     void placeCube();
     bool recordPose(int robotNum, std::string name, bool isJointSpace);
     void backHome(int robot);
@@ -218,4 +219,5 @@ private:
     bool isSwopOver = false;
     bool isTest = false;
     bool placeCubeRobot;
+    int testRobot;
 };

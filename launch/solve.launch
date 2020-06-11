@@ -3,6 +3,7 @@
     <arg name="record_pose_path" default="$(find rubik_cube_solve)" />
     <arg name="test" default="1" />
     <arg name="speed" default="0.7" />
+    <arg name="testRobot" default="0" />
 
     <include file="$(find rubik_cube_solve)/launch/load_pose_path.launch" />
 
@@ -11,6 +12,7 @@
     <param name="isRuning_solveMagic" type="bool" value="false" />             
 
     <node pkg="rubik_cube_solve" type="RubikCubeSolve" name="rubik_cube_solve" output="screen" >
+        <param name="testRobot" type="int" value="$(arg testRobot)" />
         <param name="prepare_some_distance" type="double" value="$(arg prepare_some_distance)" />
         <param name="fakeInitializationState" type="bool" value="true" />
         <param name="record_pose_path" type="str" value="$(arg record_pose_path)" />

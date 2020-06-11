@@ -48,6 +48,7 @@ move_group1{group1}
     Cstate.isFinish = false;
     isBegingSolve = false;
     isStop = false;
+    nh.getParam("/rubik_cube_solve/testRobot", testRobot);
 }
 
 bool RubikCubeSolve::placeCubeCallback(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep)
@@ -460,6 +461,14 @@ moveit::planning_interface::MoveGroupInterface& RubikCubeSolve::getMoveGroup(int
         return move_group1;
 }
 
+int RubikCubeSolve::getMoveGroupNum(moveit::planning_interface::MoveGroupInterface& move_group)
+{
+    if(move_group.getName() == "arm0")
+        return 0;
+    else if (move_group.getName() == "arm1")
+        return 1;
+}
+
 bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Request& req, rubik_cube_solve::rubik_cube_solve_cmd::Response& rep)
 {
     isTest = true;
@@ -839,10 +848,12 @@ bool RubikCubeSolve::rotateCube(moveit::planning_interface::MoveGroupInterface& 
 
 bool RubikCubeSolve::openGripper(moveit::planning_interface::MoveGroupInterface& move_group)
 {
+    if(getMoveGroupNum(move_group) != testRobot)
+        return false;
     bool flag = true;
-   hirop_msgs::openGripper srv;
-   if(!isStop)
-   {
+    hirop_msgs::openGripper srv;
+    if(!isStop)
+    {
         if(move_group.getName() == "arm0"){
             flag = openGripper_client0.call(srv);
             ROS_INFO("arm0 openGripper ");
@@ -853,15 +864,17 @@ bool RubikCubeSolve::openGripper(moveit::planning_interface::MoveGroupInterface&
             flag = openGripper_client1.call(srv);
         }
         ros::Duration(2).sleep();
-   }
+    }
     return flag;
 }
 bool RubikCubeSolve::closeGripper(moveit::planning_interface::MoveGroupInterface& move_group)
 {
-   bool flag = true;
-   hirop_msgs::closeGripper srv;
-   if(!isStop)
-   {
+    if(getMoveGroupNum(move_group) != testRobot)
+        return false;
+    bool flag = true;
+    hirop_msgs::closeGripper srv;
+    if(!isStop)
+    {
         if(move_group.getName() == "arm0")
         {
             ROS_INFO("arm0 closeGripper ");
@@ -873,7 +886,7 @@ bool RubikCubeSolve::closeGripper(moveit::planning_interface::MoveGroupInterface
             flag = closeGripper_client1.call(srv);
         }
         ros::Duration(2).sleep();
-   }
+    }
     return flag;
 }
 
@@ -1044,6 +1057,8 @@ bool RubikCubeSolve::transformFrame(geometry_msgs::PoseStamped& poseStamped, std
 moveit::planning_interface::MoveItErrorCode RubikCubeSolve::setAndMove(moveit::planning_interface::MoveGroupInterface& move_group, \
                                                                         geometry_msgs::PoseStamped& poseStamped)
 {
+    if(getMoveGroupNum(move_group) != testRobot)
+        return moveit::planning_interface::MoveItErrorCode::FAILURE;
     std::vector<double> joint = move_group.getCurrentJointValues();
     moveit_msgs::RobotState r;
     r.joint_state.position = joint;
@@ -1136,7 +1151,9 @@ geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPosoTarget(moveit::plan
 
 // TODO 主要出现的bugb代码
 void RubikCubeSolve::setJoint6Value(moveit::planning_interface::MoveGroupInterface& move_group, int angle,bool joint_mode)
-{
+    {
+    if(getMoveGroupNum(move_group) != testRobot)
+        return ;
     double a = static_cast<double>(angle);
     std::vector<double> joint;
 
@@ -1307,6 +1324,8 @@ bool RubikCubeSolve::writePoseOnceFile(const std::string& name, const geometry_m
 
 void RubikCubeSolve::robotMoveCartesianUnit2(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z)
 {
+    if(getMoveGroupNum(group) != testRobot)
+        return;
     std::vector<double>joint = group.getCurrentJointValues();
     moveit_msgs::RobotState r;
     r.joint_state.position = joint;
