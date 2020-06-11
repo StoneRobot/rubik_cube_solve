@@ -32,9 +32,10 @@ move_group1{group1}
 
     double speed;
     nh.getParam("/rubik_cube_solve/speed", speed);
-
-    move_group0.setMaxAccelerationScalingFactor(0.05);
-    move_group1.setMaxAccelerationScalingFactor(0.05);
+    // move_group0.setPlanningTime(0.01);
+    // move_group1.setPlanningTime(0.01);
+    move_group0.setMaxAccelerationScalingFactor(0.1);
+    move_group1.setMaxAccelerationScalingFactor(0.1);
     move_group0.setMaxVelocityScalingFactor(speed);
     move_group1.setMaxVelocityScalingFactor(speed);
     move_group0.setGoalPositionTolerance(0.0001);
@@ -153,7 +154,7 @@ void RubikCubeSolve::transformData()
             face = 2;
         }
         rubikCubeSolvetransformData[i][0] = face;
-        ROS_INFO_STREAM("face: " << rubikCubeSolvetransformData[i][0] << "angle: " <<rubikCubeSolvetransformData[i][1]);
+        ROS_INFO_STREAM("face: " << rubikCubeSolvetransformData[i][0] << ", angle: " <<rubikCubeSolvetransformData[i][1]);
     }
     std::vector<int>().swap(rubikCubeSolveData);
 }
@@ -722,16 +723,21 @@ void RubikCubeSolve::spinOnce()
         {
             ROS_INFO("begin solve .....");
             int cnt = 1;
+            std_msgs::Int8MultiArray msg;
+            msg.data.resize(2);
+            msg.data[0] = rubikCubeSolvetransformData.size();
             for(int i=0; i<rubikCubeSolvetransformData.size() && ros::ok() && !isStop; ++i)
             {
-                ROS_INFO("step: %d, count: %d",cnt, rubikCubeSolvetransformData.size());
+                ROS_INFO("begin step: %d, count: %d",cnt, rubikCubeSolvetransformData.size());
                 analyseData(rubikCubeSolvetransformData[i][0], rubikCubeSolvetransformData[i][1]);
                 action();
                 cnt ++;
-                if(cnt % 10 == 0)
-                {
-                    setRobotEnable();
-                }
+                msg.data[1] = i+1;
+                progressPub.publish(msg);
+                // if(cnt % 10 == 0)
+                // {
+                //     setRobotEnable();
+                // }
             }
             std::vector<std::vector<int> >().swap(rubikCubeSolvetransformData);
             Cstate.isFinish = true;

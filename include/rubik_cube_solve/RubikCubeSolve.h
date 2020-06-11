@@ -174,15 +174,18 @@ private:
     ros::ServiceServer beginSolve;
     ros::ServiceServer placeCubeServer;
 
-    ros::Subscriber stopMoveSub;
-    ros::Subscriber rubikCubeSolveData_sub;
-
     ros::ServiceClient receiveSolve;
     ros::ServiceClient shootClient;
     ros::ServiceClient openGripper_client0;
     ros::ServiceClient closeGripper_client0;
     ros::ServiceClient openGripper_client1;
     ros::ServiceClient closeGripper_client1;
+
+    ros::Subscriber stopMoveSub;
+    ros::Subscriber rubikCubeSolveData_sub;
+    
+    ros::Publisher progressPub;
+
 
     std::vector<int> rubikCubeSolveData;
     std::vector<std::vector<int> > rubikCubeSolvetransformData;
