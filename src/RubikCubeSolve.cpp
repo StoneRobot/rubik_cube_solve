@@ -96,6 +96,7 @@ bool RubikCubeSolve::rbRunCommand(rb_msgAndSrv::rb_ArrayAndBool::Request& req, r
         isBegingSolve = true;
     }
     runModel = req.data[0];
+    isStop = false;
     spinOnce();
     rep.respond = true;
     isStop = false;
