@@ -160,8 +160,11 @@ public:
     bool recordPose(int robotNum, std::string name, bool isJointSpace);
     void backHome(int robot);
     bool setRobotEnable();
-    bool calibration();
+    int moveToPose();
+    int Cartesian();
+    int updataPointData();
     bool pickCube();
+
 private:
     void getPrepareSomeDistanceRobotPose();
 

@@ -1266,7 +1266,7 @@ bool RubikCubeSolve::pickCube()
     return true;
 }
 
-bool RubikCubeSolve::calibration()
+int RubikCubeSolve::moveToPose()
 {
     // 复原魔方
     if(recoredPointData.stepNum == 0)
@@ -1276,24 +1276,29 @@ bool RubikCubeSolve::calibration()
     }
     if(recoredPointData.model == 0)
     {
-        switch (recoredPointData.stepCount)
+        switch (recoredPointData.stepNum)
         {
             case 1:
+                // robot1
+                closeGripper(move_group1);
+                robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
                 setAndMove(move_group1, robotPose[1][0]);
                 break;
             case 2:
+                // robot0
                 setAndMove(move_group0, robotPose[0][0]);
                 break;
             case 3:
+                // robot1
                 setAndMove(move_group1, robotPose[1][3]);
                 break;
             case 4:
-                setAndMove(move_group0, robotPose[0][2]);
+                setAndMove(move_group0, robotPose[0][1]);
                 break;
             case 5:
                 robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance, 0);
                 setAndMove(move_group0, robotPose[0][0]);
-                setAndMove(move_group0, robotPose[0][3]);
+                setAndMove(move_group0, robotPose[0][2]);
             case 6:
                 robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance, 0);
                 setAndMove(move_group0, robotPose[0][0]);
@@ -1308,54 +1313,128 @@ bool RubikCubeSolve::calibration()
                 robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance, 0);
                 setAndMove(move_group0, robotPose[0][0]);
                 setAndMove(move_group1, robotPose[1][6]);
-                setAndMove(move_group0, robotPose[0][7]);
                 break;
             case 9:
+                setAndMove(move_group0, robotPose[0][7]);
+                break;
+            case 10:
                 robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance*0.707, -prepare_some_distance*0.707);
                 setAndMove(move_group0, robotPose[0][0]);
                 setAndMove(move_group1, robotPose[1][3]);
                 robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
                 setAndMove(move_group0, robotPose[0][3]);
                 break;
-            case 10:
+            case 11:
                 closeGripper(move_group0);
                 openGripper(move_group1);
                 robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance, 0);
                 setAndMove(move_group1, robotPose[1][0]);
                 setAndMove(move_group1, robotPose[1][1]);
                 break;
-            case 11:
+            case 12:
                 robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance, 0);
                 setAndMove(move_group1, robotPose[1][0]);
                 setAndMove(move_group1, robotPose[1][2]);
                 break;
-            case 12:
+            case 13:
                 robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance, 0);
                 setAndMove(move_group1, robotPose[1][0]);
                 setAndMove(move_group1, robotPose[1][4]);
                 break;
-            case 13:
+            case 14:
                 robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance, 0);
                 setAndMove(move_group1, robotPose[1][0]);
                 setAndMove(move_group1, robotPose[1][5]);
                 break;
-            case 14:
+            case 15:
                 robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance, 0);
                 setAndMove(move_group1, robotPose[1][0]);
                 setAndMove(move_group0, robotPose[0][6]);
+                break;
+            case 16:
                 setAndMove(move_group1, robotPose[1][7]);
                 break;
-            case 15:
+            case 17:
                 robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance*0.707, -prepare_some_distance*0.707);
                 setAndMove(move_group1, robotPose[1][0]);
                 setAndMove(move_group0, photographPose[9]);
                 break;
         }
     }
-    else
+    else if(recoredPointData.model == 1)
     {
-    }
-    
+        switch (recoredPointData.stepNum == 1)
+        {
+            case 1:
+                closeGripper(move_group1);
+                robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
+                setAndMove(move_group1, photographPose[1]);
+                setAndMove(move_group0, photographPose[2]);
+                break;
+            case 2:
+                setAndMove(move_group1, photographPose[3]);
+                setAndMove(move_group0, photographPose[4]);
+                break;
+            case 3:
+                analyseData(3, 0);
+                swop(getMoveGroup(Adata.captureRobot), getMoveGroup(Adata.otherRobot), robotPose[Adata.captureRobot][Adata.capturePoint]);
+                setAndMove(move_group0, photographPose[5]);
+                setAndMove(move_group1, photographPose[6]);
+                break;
+            case 4:
+                setAndMove(move_group0, photographPose[7]);
+                setAndMove(move_group1, photographPose[8]);
+                break;
+        }
+    }    
+    return 0;
 }
 
+int RubikCubeSolve::Cartesian()
+{
+    if(recoredPointData.stepNum == 0)
+        robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
+    if(recoredPointData.model == 0)
+    {
+        if((recoredPointData.stepNum >= 4 && recoredPointData.stepNum <=7) || recoredPointData.stepNum == 9)
+            robotMoveCartesianUnit2(move_group0, 0, prepare_some_distance, 0);
+        else if(recoredPointData.stepNum >= 10 && recoredPointData.stepNum <= 13)
+            robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
+        else if(recoredPointData.stepNum == 8)
+            robotMoveCartesianUnit2(move_group0, 0, prepare_some_distance*0.707, prepare_some_distance*0.707);
+        else if(recoredPointData.stepNum == 14)
+            robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance*0.707, prepare_some_distance*0.707);
+    }
+    return 0;
+}
+
+int RubikCubeSolve::updataPointData()
+{
+    if(recoredPointData.stepNum == 0)
+    {
+        recordPose(1, recoredPointData.pickPoseParam[recoredPointData.stepNum], false);
+    }
+    else if(recoredPointData.model == 0)
+    {
+        if
+    }
+    else if(recoredPoint.model == 1)
+    {
+        int captureCubeRobot;
+        int otherRobot;
+        if(recoredPointData.stepNum ==1 || recoredPointData.stepNum ==2)
+        {
+            captureCubeRobot = 1;
+            otherRobot = 0;
+        }
+        else if(recoredPointData.stepNum ==3 || recoredPointData.stepNum ==4)
+        {
+            captureCubeRobot = 0;
+            otherRobot = 1;
+        }
+        pick
+        recordPose(captureCubeRobot, recoredPointData.pickPoseParam[recoredPointData.stepNum*2-1], false);
+        recordPose(otherRobot, recoredPointData.pickPoseParam[recoredPointData.stepNum*2], false);
+    }
+}
 

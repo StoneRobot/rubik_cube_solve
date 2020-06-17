@@ -23,9 +23,9 @@ while not rospy.is_shutdown():
     rospy.loginfo("face: %d; angle: %d", i, j)
     client.call(i, j)
     cnt += 1
-    if cnt % 10 == 0:
-        system("rosrun rubik_cube_solve set_robot_enable_false.sh")
-        system("rosrun rubik_cube_solve set_robot_enable_true.sh")
+    # if cnt % 10 == 0:
+    #     system("rosrun rubik_cube_solve set_robot_enable_false.sh")
+    #     system("rosrun rubik_cube_solve set_robot_enable_true.sh")
     rospy.loginfo("cnt: %d", cnt)
     rate.sleep()
     k = i
