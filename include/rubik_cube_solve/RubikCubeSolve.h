@@ -57,6 +57,19 @@ struct ActionData
     bool isSwop;
 };
 
+struct recoredPoint
+{
+    int model;
+    int stepNum;
+    int stepCount;
+    const std::vector<std::string> paramName={"/pick0_path", "/pose14_path", "/pose03_path", "/pose123_path", "/pose021_path", "/pose022_path",\
+                                    "/pose024_path", "/pose025_path", "/pose111_path", "/pose012_path", "/pose023_path", "/pose121_path", \
+                                    "/pose122_path", "/pose124_path", "/pose125_path", "/pose011_path", "/pose112_path", "pick9_path"};
+
+    const std::vector<std::string> pickPoseParam = {"/pick1_path", "/pick2_path","/pick3_path", "/pick4_path", \
+                                                    "/pick5_path","/pick6_path", "/pick7_path", "pick8_path"};
+};
+
 class RubikCubeSolve
 {
 public:
@@ -136,7 +149,7 @@ public:
 
     void photograph();
     void photographPickPlace(int robotNum, geometry_msgs::PoseStamped& pose, bool isPick, int pre_grasp_approach[], int post_grasp_retreat[]);
-    // void photographstep(int robotNum, int posePick, int poseShoot, int pre_grasp_approach[], int post_grasp_retreat[], bool only_pick);
+
     void photographstepDoublePhoto(int photoNum, int capturePose, int talkPose);
     void shoot(int num=0);
     void stopMove();
@@ -147,6 +160,8 @@ public:
     bool recordPose(int robotNum, std::string name, bool isJointSpace);
     void backHome(int robot);
     bool setRobotEnable();
+    bool calibration();
+    bool pickCube();
 private:
     void getPrepareSomeDistanceRobotPose();
 
@@ -205,6 +220,7 @@ private:
 
     CubeState Cstate;
     ActionData Adata;
+    recoredPoint recoredPointData;
     double prepare_some_distance;
     const double rubikCubeAdd = 0.0095;
     const int UP = 1;

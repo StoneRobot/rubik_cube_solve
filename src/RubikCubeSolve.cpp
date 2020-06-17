@@ -30,11 +30,15 @@ move_group1{group1}
     robotPose[0].resize(COLUMNS);
     robotPose[1].resize(COLUMNS);
     
+    setJointConstraints(move_group0);
+    setJointConstraints(move_group1);
+    ROS_INFO_STREAM(move_group0.getPathConstraints());
+    ROS_INFO_STREAM(move_group1.getPathConstraints());
 
     double speed;
     nh.getParam("/rubik_cube_solve/speed", speed);
-    // move_group0.setPlanningTime(0.01);
-    // move_group1.setPlanningTime(0.01);
+    // move_group0.setPlanningTime(10);
+    // move_group1.setPlanningTime(10);
     move_group0.setMaxAccelerationScalingFactor(0.1);
     move_group1.setMaxAccelerationScalingFactor(0.1);
     move_group0.setMaxVelocityScalingFactor(speed);
@@ -253,12 +257,7 @@ void RubikCubeSolve::photograph()
     backHome(1);
     // 抓起魔方
     // PosepickPose0.yaml
-    setAndMove(move_group1, photographPose[0]);
-    openGripper(move_group1);
-    robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
-    closeGripper(move_group1);
-    InitializationState();
-    robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
+    pickCube();
     goPreparePose();
     // PosepickPose1.yaml
     setAndMove(move_group1, photographPose[1]);
@@ -397,15 +396,17 @@ void RubikCubeSolve::setJointConstraints(moveit::planning_interface::MoveGroupIn
     {
         jointCon.joint_name = "joint_4";
         jointCon.position = 1.0;
+        jointCon.tolerance_above = 2;
+        jointCon.tolerance_below = 1.5;
     }
     else
     {
         jointCon.joint_name = "R_joint_4";
         jointCon.position = -1.0;
+        jointCon.tolerance_above = 1.5;
+        jointCon.tolerance_below = 2.0;
     }
-    jointCon.tolerance_above = 2.0;
-    jointCon.tolerance_below = 2.0;
-    jointCon.weight = 0.99;
+    jointCon.weight = 1;
     moveit_msgs::Constraints con;
     con.joint_constraints.push_back(jointCon);
     move_group.setPathConstraints(con);
@@ -500,13 +501,7 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
         {
             // 测试魔方解算数据
             backHome(1);
-            setAndMove(move_group1, photographPose[0]);
-            openGripper(move_group1);
-            robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
-            closeGripper(move_group1);
-            robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
-            InitializationState();
-            
+            pickCube();
             cubeParse::SolveCube srv;
             receiveSolve.call(srv);
             goPreparePose();
@@ -559,12 +554,7 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
             // 測試機器人1的精度
             ROS_INFO_STREAM("test 8");
             backHome(1);
-            setAndMove(move_group1, photographPose[0]);
-            openGripper(move_group1);
-            robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
-            closeGripper(move_group1);
-            robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
-            InitializationState();
+            pickCube();
             goPreparePose();
         }
         else if(flag  == 9)
@@ -979,33 +969,6 @@ void RubikCubeSolve::addData(geometry_msgs::PoseStamped& pose, YAML::Node node)
     pose.pose.orientation.w = node["pose"]["orientation"]["w"].as<double>();
 }
 
-// void RubikCubeSolve::addData(double pose[], const std::string& num_of_pose, YAML::Node doc)
-// {
-//     pose[0] = doc[num_of_pose]["x"].as<double>();
-//     pose[1] = doc[num_of_pose]["y"].as<double>();
-//     pose[2] = doc[num_of_pose]["z"].as<double>();
-//     pose[3] = doc[num_of_pose]["X"].as<double>();
-//     pose[4] = doc[num_of_pose]["Y"].as<double>();
-//     pose[5] = doc[num_of_pose]["Z"].as<double>();
-// }
-
-// void RubikCubeSolve::loadPoseData()
-// {
-//     std::string path;
-//     YAML::Node node;
-//     nh.getParam("/pose_data0_path", path);
-//     node = YAML::LoadFile(path);
-//     addData(data0.pose0, "pose0", node);
-//     addData(data0.pose1, "pose1", node);
-//     addData(data0.pose2, "pose2", node);
-
-//     nh.getParam("/pose_data1_path", path);
-//     node = YAML::LoadFile(path);
-//     addData(data1.pose0, "pose0", node);
-//     addData(data1.pose1, "pose1", node);
-//     addData(data1.pose2, "pose2", node);
-// }
-
 bool RubikCubeSolve::transformFrame(geometry_msgs::PoseStamped& poseStamped, std::string frame_id="world")
 {
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
@@ -1218,57 +1181,6 @@ void RubikCubeSolve::setJoint6Value(moveit::planning_interface::MoveGroupInterfa
      }
 }
 
-// void RubikCubeSolve::getPoseStamped()
-// {
-//     backHome(0);
-//     backHome(1);
-//     setEulerAngle(move_group0, -1.57, 0, 0);
-//     setEulerAngle(move_group1, 1.57, 0, 0);
-//     setEulerAngle(move_group0, 0, -1.57, 0);
-//     setEulerAngle(move_group1, 0, -1.57, 0);
-
-//     // 空間點位3,4
-
-//     robotPose[0][0] = setEndEffectorPositionTarget(move_group0, data0.pose0[0], data0.pose0[1], data0.pose0[2]);
-//     robotPose[1][0] = setEndEffectorPositionTarget(move_group1, data1.pose0[0], data1.pose0[1], data1.pose0[2]);
-
-//     // 空間點位2
-//     // 点位1
-//     ROS_INFO_STREAM("point 1");
-
-//     robotPose[0][1] = setEndEffectorPosoTarget(move_group0, data0.pose1[0], data0.pose1[1]+rubikCubeAdd, data0.pose1[2], -90, 0, 0, false);
-//     robotPose[1][1] = setEndEffectorPosoTarget(move_group1, data1.pose1[0], data1.pose1[1]-rubikCubeAdd, data1.pose1[2], 90, 0, 0, false);
-//     // 点位2
-//     ROS_INFO_STREAM("point 2");
-//     robotPose[0][2] = setEndEffectorPosoTarget(move_group0, 0, 0, -2*rubikCubeAdd, 180, 0, 0, false);
-//     robotPose[1][2] = setEndEffectorPosoTarget(move_group1, 0, 0, -2*rubikCubeAdd, -180, 0, 0, false);
-//     // 点位3
-//     ROS_INFO_STREAM("point 3");
-//     robotPose[0][3] = setEndEffectorPosoTarget(move_group0, 0, rubikCubeAdd, -rubikCubeAdd, -90, 0, 0, false);
-//     robotPose[1][3] = setEndEffectorPosoTarget(move_group1, 0, -rubikCubeAdd, -rubikCubeAdd, 90, 0, 0, false);
-//     // 点位4
-//     ROS_INFO_STREAM("point 4");
-//     robotPose[0][4] = setEndEffectorPosoTarget(move_group0, 0, 0, -2*rubikCubeAdd, 180, 0, 0, false);
-//     robotPose[1][4] = setEndEffectorPosoTarget(move_group1, 0, 0, -2*rubikCubeAdd, -180, 0, 0, false);
-//     // 拧动的位置
-//     ROS_INFO_STREAM("rotate ");
-//     robotPose[0][5] = setEndEffectorPosoTarget(move_group0, -rubikCubeAdd, 0, -rubikCubeAdd, -180, 0, 0, false);
-//     robotPose[1][5] = setEndEffectorPosoTarget(move_group1, -rubikCubeAdd, 0, -rubikCubeAdd, 180, 0, 0, false);
-//     ROS_INFO_STREAM("center");
-
-//     setEndEffectorPosoTarget(move_group0, rubikCubeAdd, 0, 0, 0, 0, 0, false);
-//     setEndEffectorPosoTarget(move_group1, rubikCubeAdd, 0, 0, 0, 0, 0, false);
-
-//     // 空間點位1
-//     robotPose[0][6] = setEndEffectorPosoTarget(move_group0, data0.pose2[0], data0.pose2[1], data0.pose2[2], data0.pose2[3], data0.pose2[4], data0.pose2[5]);
-//     robotPose[1][6] = setEndEffectorPosoTarget(move_group1, data1.pose2[0], data1.pose2[1], data1.pose2[2], data1.pose2[3], data1.pose2[4], data1.pose2[5]);
-
-//     robotPose[0][7] = setEndEffectorPosoTarget(move_group0, -rubikCubeAdd, 0, -rubikCubeAdd, 0, 0, 0);
-//     robotPose[1][7] = setEndEffectorPosoTarget(move_group1, -rubikCubeAdd, 0, -rubikCubeAdd, 0, 0, 0);
-// }
-
-
-
 int  RubikCubeSolve::writePoseFile()
 {
     std::string path;
@@ -1342,3 +1254,108 @@ void RubikCubeSolve::backHome(int robot)
         getMoveGroup(robot).move();
     }
 }
+
+bool RubikCubeSolve::pickCube()
+{
+    setAndMove(move_group1, photographPose[0]);
+    openGripper(move_group1);
+    robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
+    closeGripper(move_group1);
+    InitializationState();
+    robotMoveCartesianUnit2(move_group1, 0, 0, prepare_some_distance);
+    return true;
+}
+
+bool RubikCubeSolve::calibration()
+{
+    // 复原魔方
+    if(recoredPointData.stepNum == 0)
+    {
+        setAndMove(move_group1, photographPose[0]);
+        openGripper(move_group1);
+    }
+    if(recoredPointData.model == 0)
+    {
+        switch (recoredPointData.stepCount)
+        {
+            case 1:
+                setAndMove(move_group1, robotPose[1][0]);
+                break;
+            case 2:
+                setAndMove(move_group0, robotPose[0][0]);
+                break;
+            case 3:
+                setAndMove(move_group1, robotPose[1][3]);
+                break;
+            case 4:
+                setAndMove(move_group0, robotPose[0][2]);
+                break;
+            case 5:
+                robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance, 0);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group0, robotPose[0][3]);
+            case 6:
+                robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance, 0);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group0, robotPose[0][4]);
+                break;
+            case 7:
+                robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance, 0);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group0, robotPose[0][5]);
+                break;
+            case 8:
+                robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance, 0);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group1, robotPose[1][6]);
+                setAndMove(move_group0, robotPose[0][7]);
+                break;
+            case 9:
+                robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance*0.707, -prepare_some_distance*0.707);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group1, robotPose[1][3]);
+                robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
+                setAndMove(move_group0, robotPose[0][3]);
+                break;
+            case 10:
+                closeGripper(move_group0);
+                openGripper(move_group1);
+                robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance, 0);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group1, robotPose[1][1]);
+                break;
+            case 11:
+                robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance, 0);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group1, robotPose[1][2]);
+                break;
+            case 12:
+                robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance, 0);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group1, robotPose[1][4]);
+                break;
+            case 13:
+                robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance, 0);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group1, robotPose[1][5]);
+                break;
+            case 14:
+                robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance, 0);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group0, robotPose[0][6]);
+                setAndMove(move_group1, robotPose[1][7]);
+                break;
+            case 15:
+                robotMoveCartesianUnit2(move_group1, 0, prepare_some_distance*0.707, -prepare_some_distance*0.707);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group0, photographPose[9]);
+                break;
+        }
+    }
+    else
+    {
+    }
+    
+}
+
+

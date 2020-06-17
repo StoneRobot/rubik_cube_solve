@@ -67,3 +67,5 @@ pose024 后
 右边下
 pose122 前
 pose123 ok
+
+sudo apt-get install build-essential cmake doxygen g++ git ipython octave python-dev python-h5py python-numpy python-pip python-scipy python-sympy qt5-default minizip
