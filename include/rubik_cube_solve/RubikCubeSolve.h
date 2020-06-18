@@ -62,12 +62,11 @@ struct recoredPoint
     int model;
     int stepNum;
     int stepCount;
-    const std::vector<std::string> paramName={"/pick0_path", "/pose14_path", "/pose03_path", "/pose123_path", "/pose021_path", "/pose022_path",\
-                                    "/pose024_path", "/pose025_path", "/pose111_path", "/pose012_path", "/pose023_path", "/pose121_path", \
-                                    "/pose122_path", "/pose124_path", "/pose125_path", "/pose011_path", "/pose112_path", "pick9_path"};
+    const std::vector<std::string> poseName={"Pose0", "pose14", "pose03", "pose123", "pose021", "pose022",\
+                                    "pose024", "pose025", "pose111", "pose012", "pose023", "pose121", \
+                                    "pose122", "pose124", "pose125", "pose011", "pose112", "Pose9"};
 
-    const std::vector<std::string> pickPoseParam = {"/pick1_path", "/pick2_path","/pick3_path", "/pick4_path", \
-                                                    "/pick5_path","/pick6_path", "/pick7_path", "pick8_path"};
+    const std::vector<std::string> pickPoseParam = {"Pose1", "Pose2", "Pose3", "Pose4", "Pose5", "Pose6",  "Pose7", "Pose8"};
 };
 
 class RubikCubeSolve
@@ -223,7 +222,7 @@ private:
 
     CubeState Cstate;
     ActionData Adata;
-    recoredPoint recoredPointData;
+    recoredPoint recordPointData;
     double prepare_some_distance;
     const double rubikCubeAdd = 0.0095;
     const int UP = 1;

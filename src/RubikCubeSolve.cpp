@@ -1269,14 +1269,14 @@ bool RubikCubeSolve::pickCube()
 int RubikCubeSolve::moveToPose()
 {
     // 复原魔方
-    if(recoredPointData.stepNum == 0)
+    if(recordPointData.stepNum == 0)
     {
         setAndMove(move_group1, photographPose[0]);
         openGripper(move_group1);
     }
-    if(recoredPointData.model == 0)
+    if(recordPointData.model == 0)
     {
-        switch (recoredPointData.stepNum)
+        switch (recordPointData.stepNum)
         {
             case 1:
                 // robot1
@@ -1361,9 +1361,9 @@ int RubikCubeSolve::moveToPose()
                 break;
         }
     }
-    else if(recoredPointData.model == 1)
+    else if(recordPointData.model == 1)
     {
-        switch (recoredPointData.stepNum == 1)
+        switch (recordPointData.stepNum == 1)
         {
             case 1:
                 closeGripper(move_group1);
@@ -1392,17 +1392,17 @@ int RubikCubeSolve::moveToPose()
 
 int RubikCubeSolve::Cartesian()
 {
-    if(recoredPointData.stepNum == 0)
+    if(recordPointData.stepNum == 0)
         robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
-    if(recoredPointData.model == 0)
+    if(recordPointData.model == 0)
     {
-        if((recoredPointData.stepNum >= 4 && recoredPointData.stepNum <=7) || recoredPointData.stepNum == 9)
+        if((recordPointData.stepNum >= 4 && recordPointData.stepNum <=7) || recordPointData.stepNum == 9)
             robotMoveCartesianUnit2(move_group0, 0, prepare_some_distance, 0);
-        else if(recoredPointData.stepNum >= 10 && recoredPointData.stepNum <= 13)
+        else if(recordPointData.stepNum >= 10 && recordPointData.stepNum <= 13)
             robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
-        else if(recoredPointData.stepNum == 8)
+        else if(recordPointData.stepNum == 8)
             robotMoveCartesianUnit2(move_group0, 0, prepare_some_distance*0.707, prepare_some_distance*0.707);
-        else if(recoredPointData.stepNum == 14)
+        else if(recordPointData.stepNum == 14)
             robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance*0.707, prepare_some_distance*0.707);
     }
     return 0;
@@ -1410,31 +1410,38 @@ int RubikCubeSolve::Cartesian()
 
 int RubikCubeSolve::updataPointData()
 {
-    if(recoredPointData.stepNum == 0)
+    if(recordPointData.stepNum == 0)
     {
-        recordPose(1, recoredPointData.pickPoseParam[recoredPointData.stepNum], false);
+        recordPose(1, recordPointData.poseName[recordPointData.stepNum], false);
     }
-    else if(recoredPointData.model == 0)
+    else if(recordPointData.model == 0)
     {
-        if
+        std::vector<int> robot0 = {2, 4, 5, 6, 7, 9, 10, 15, 17};
+        std::vector<int> robot1 = {0, 1, 3, 8, 11, 12, 13, 14, 16};
+        for(auto i: robot0)
+            if(recordPointData.stepNum == i)
+            {
+                recordPose(0, recordPointData.poseName[i], false);
+                return 0;
+            }
+        recordPose(1, recordPointData.poseName[recordPointData.stepNum], false);
     }
-    else if(recoredPoint.model == 1)
+    else if(recordPointData.model == 1)
     {
         int captureCubeRobot;
         int otherRobot;
-        if(recoredPointData.stepNum ==1 || recoredPointData.stepNum ==2)
+        if(recordPointData.stepNum ==1 || recordPointData.stepNum ==2)
         {
             captureCubeRobot = 1;
             otherRobot = 0;
         }
-        else if(recoredPointData.stepNum ==3 || recoredPointData.stepNum ==4)
+        else if(recordPointData.stepNum ==3 || recordPointData.stepNum ==4)
         {
             captureCubeRobot = 0;
             otherRobot = 1;
         }
-        pick
-        recordPose(captureCubeRobot, recoredPointData.pickPoseParam[recoredPointData.stepNum*2-1], false);
-        recordPose(otherRobot, recoredPointData.pickPoseParam[recoredPointData.stepNum*2], false);
+        recordPose(captureCubeRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2-1], false);
+        recordPose(otherRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2], false);
     }
 }
 
