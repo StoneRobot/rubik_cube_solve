@@ -1440,8 +1440,8 @@ int RubikCubeSolve::updataPointData()
             captureCubeRobot = 0;
             otherRobot = 1;
         }
-        recordPose(captureCubeRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2-1], false);
-        recordPose(otherRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2], false);
+        // recordPose(captureCubeRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2-1], false);
+        // recordPose(otherRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2], false);
     }
 }
 
