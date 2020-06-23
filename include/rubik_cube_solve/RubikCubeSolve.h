@@ -66,7 +66,7 @@ struct recoredPoint
                                     "pose024", "pose025", "pose111", "pose012", "pose023", "pose121", \
                                     "pose122", "pose124", "pose125", "pose011", "pose112", "Pose9"};
 
-    const std::vector<std::string> pickPoseParam = {"Pose1", "Pose2", "Pose3", "Pose4", "Pose5", "Pose6",  "Pose7", "Pose8"};
+    const std::vector<std::string> shootPhotoPoseName = {"Pose1", "Pose2", "Pose3", "Pose4", "Pose5", "Pose6",  "Pose7", "Pose8"};
 };
 
 class RubikCubeSolve
@@ -190,6 +190,10 @@ private:
     ros::ServiceServer goToPose;
     ros::ServiceServer beginSolve;
     ros::ServiceServer placeCubeServer;
+
+    ros::ServiceServer nextStep;
+    ros::ServiceServer lineCartesian;
+    ros::ServiceServer recordPoint;
 
     ros::ServiceClient receiveSolve;
     ros::ServiceClient shootClient;

@@ -1363,7 +1363,7 @@ int RubikCubeSolve::moveToPose()
     }
     else if(recordPointData.model == 1)
     {
-        switch (recordPointData.stepNum == 1)
+        switch (recordPointData.stepNum)
         {
             case 1:
                 closeGripper(move_group1);
@@ -1418,10 +1418,10 @@ int RubikCubeSolve::updataPointData()
     {
         std::vector<int> robot0 = {2, 4, 5, 6, 7, 9, 10, 15, 17};
         std::vector<int> robot1 = {0, 1, 3, 8, 11, 12, 13, 14, 16};
-        for(auto i: robot0)
+        for(int i: robot0)
             if(recordPointData.stepNum == i)
             {
-                recordPose(0, recordPointData.poseName[i], false);
+                recordPose(0, recordPointData.poseName[recordPointData.stepNum], false);
                 return 0;
             }
         recordPose(1, recordPointData.poseName[recordPointData.stepNum], false);
