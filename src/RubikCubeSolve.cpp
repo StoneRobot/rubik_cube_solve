@@ -14,6 +14,7 @@ move_group1{group1}
     goToPose = nh.advertiseService("go_to_pose", &RubikCubeSolve::goToPoseServer, this);
     beginSolve = nh.advertiseService("/MagicStepRunCommand", &RubikCubeSolve::rbRunCommand, this);
     placeCubeServer = nh.advertiseService("/placeMagicCube", &RubikCubeSolve::placeCubeCallback, this);
+    magicMoveToPoint = nh.advertiseService("/magic_move_to_point", &RubikCubeSolve::magicMoveToPointCallback, this);
 
     progressPub = nh.advertise<std_msgs::Int8MultiArray>("progress_rbSolveMagic", 10);
 
@@ -52,6 +53,14 @@ move_group1{group1}
     Cstate.isFinish = false;
     isBegingSolve = false;
     isStop = false;
+}
+
+bool RubikCubeSolve::magicMoveToPointCallback(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep)
+{
+    recordPointData.model = req.data[0];
+    recordPointData.stepNum = req.data[1];
+    moveToPose();
+    return true;
 }
 
 bool RubikCubeSolve::placeCubeCallback(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep)
@@ -1274,6 +1283,7 @@ int RubikCubeSolve::moveToPose()
         setAndMove(move_group1, photographPose[0]);
         openGripper(move_group1);
     }
+    // 1 + 17 = 18
     if(recordPointData.model == 0)
     {
         switch (recordPointData.stepNum)
@@ -1410,6 +1420,7 @@ int RubikCubeSolve::Cartesian()
 
 int RubikCubeSolve::updataPointData()
 {
+    // std::vector<int> storageLocation = {0, 0, 0, 3, 1, 2, 4, 5, 6, 7, 3, 1, 2, 4, 5, 6, 7, 9};
     if(recordPointData.stepNum == 0)
     {
         recordPose(1, recordPointData.poseName[recordPointData.stepNum], false);
@@ -1430,18 +1441,18 @@ int RubikCubeSolve::updataPointData()
     {
         int captureCubeRobot;
         int otherRobot;
-        if(recordPointData.stepNum ==1 || recordPointData.stepNum ==2)
+        if(recordPointData.stepNum == 1 || recordPointData.stepNum == 2)
         {
             captureCubeRobot = 1;
             otherRobot = 0;
         }
-        else if(recordPointData.stepNum ==3 || recordPointData.stepNum ==4)
+        else if(recordPointData.stepNum == 3 || recordPointData.stepNum == 4)
         {
             captureCubeRobot = 0;
             otherRobot = 1;
         }
-        // recordPose(captureCubeRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2-1], false);
-        // recordPose(otherRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2], false);
+        recordPose(captureCubeRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2-2], false);
+        recordPose(otherRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2-1], false);
     }
+    return 0;
 }
-

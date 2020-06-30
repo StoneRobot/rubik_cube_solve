@@ -177,6 +177,7 @@ private:
     bool recordPoseCallBack(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
     bool goToPoseServer(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
     bool rbRunCommand(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep);
+    bool magicMoveToPointCallback(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep);
 
     // bool placeCubeCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
     bool placeCubeCallback(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep);
@@ -194,6 +195,7 @@ private:
     ros::ServiceServer nextStep;
     ros::ServiceServer lineCartesian;
     ros::ServiceServer recordPoint;
+    ros::ServiceServer magicMoveToPoint;
 
     ros::ServiceClient receiveSolve;
     ros::ServiceClient shootClient;
