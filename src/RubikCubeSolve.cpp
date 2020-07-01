@@ -14,7 +14,11 @@ move_group1{group1}
     goToPose = nh.advertiseService("go_to_pose", &RubikCubeSolve::goToPoseServer, this);
     beginSolve = nh.advertiseService("/MagicStepRunCommand", &RubikCubeSolve::rbRunCommand, this);
     placeCubeServer = nh.advertiseService("/placeMagicCube", &RubikCubeSolve::placeCubeCallback, this);
+
     magicMoveToPoint = nh.advertiseService("/magic_move_to_point", &RubikCubeSolve::magicMoveToPointCallback, this);
+    magicStepMove = nh.advertiseService("/magic_step_move", &RubikCubeSolve::magicStepMoveCallback, this);
+    magicRecordPose = nh.advertiseService("/magic_recordPose", &RubikCubeSolve::magicRecordPoseCallback, this);
+    
 
     progressPub = nh.advertise<std_msgs::Int8MultiArray>("progress_rbSolveMagic", 10);
 
@@ -59,7 +63,21 @@ bool RubikCubeSolve::magicMoveToPointCallback(rb_msgAndSrv::rb_ArrayAndBool::Req
 {
     recordPointData.model = req.data[0];
     recordPointData.stepNum = req.data[1];
+    ROS_INFO_STREAM(recordPointData.model << recordPointData.stepNum);
     moveToPose();
+    rep.respond = true;
+    return true;
+}
+
+bool RubikCubeSolve::magicStepMoveCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep)
+{
+    Cartesian();
+    return true;
+}
+
+bool RubikCubeSolve::magicRecordPoseCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep)
+{
+    updataPointData();
     return true;
 }
 
@@ -613,10 +631,21 @@ bool RubikCubeSolve::recordPoseCallBack(rubik_cube_solve::recordPoseStamped::Req
     return true;
 }
 
+bool RubikCubeSolve::setStartState(moveit::planning_interface::MoveGroupInterface& group)
+{
+    std::vector<double> joint = group.getCurrentJointValues();
+    moveit_msgs::RobotState r;
+    r.joint_state.position = joint;
+    group.setStartState(r);
+    group.setStartStateToCurrentState();
+}
+
 bool RubikCubeSolve::recordPose(int robotNum, std::string name, bool isJointSpce=false)
 {
+    setStartState(getMoveGroup(robotNum));
     std::string path;
     nh.getParam("/rubik_cube_solve/record_pose_path", path);
+    // $(find rubik_cube_solve)/recordPose/*.yaml
     path += "/recordPose/" + name + ".yaml";
     if(isJointSpce)
     {
@@ -1020,7 +1049,6 @@ moveit::planning_interface::MoveItErrorCode RubikCubeSolve::setAndMove(moveit::p
     std::vector<double> joint = move_group.getCurrentJointValues();
     moveit_msgs::RobotState r;
     r.joint_state.position = joint;
-    
     move_group.setStartState(r);
     move_group.setStartStateToCurrentState();
 
@@ -1277,11 +1305,14 @@ bool RubikCubeSolve::pickCube()
 
 int RubikCubeSolve::moveToPose()
 {
+    // system("rosrun rubik_cube_solve set_robot_enable_true.sh");
     // 复原魔方
     if(recordPointData.stepNum == 0)
     {
+        overStepflag = 0;
         setAndMove(move_group1, photographPose[0]);
         openGripper(move_group1);
+        InitializationState();
     }
     // 1 + 17 = 18
     if(recordPointData.model == 0)
@@ -1301,6 +1332,7 @@ int RubikCubeSolve::moveToPose()
             case 3:
                 // robot1
                 setAndMove(move_group1, robotPose[1][3]);
+                robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
                 break;
             case 4:
                 setAndMove(move_group0, robotPose[0][1]);
@@ -1309,6 +1341,7 @@ int RubikCubeSolve::moveToPose()
                 robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance, 0);
                 setAndMove(move_group0, robotPose[0][0]);
                 setAndMove(move_group0, robotPose[0][2]);
+                break;
             case 6:
                 robotMoveCartesianUnit2(move_group0, 0, -prepare_some_distance, 0);
                 setAndMove(move_group0, robotPose[0][0]);
@@ -1386,6 +1419,9 @@ int RubikCubeSolve::moveToPose()
                 setAndMove(move_group0, photographPose[4]);
                 break;
             case 3:
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group1, robotPose[1][3]);
+                robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
                 analyseData(3, 0);
                 swop(getMoveGroup(Adata.captureRobot), getMoveGroup(Adata.otherRobot), robotPose[Adata.captureRobot][Adata.capturePoint]);
                 setAndMove(move_group0, photographPose[5]);
@@ -1402,18 +1438,28 @@ int RubikCubeSolve::moveToPose()
 
 int RubikCubeSolve::Cartesian()
 {
+    int f = 0x0001;
+    f <<= recordPointData.stepNum;
+    if(overStepflag >> recordPointData.stepNum)
+        return 0;
+    else
+        overStepflag |= f;
     if(recordPointData.stepNum == 0)
         robotMoveCartesianUnit2(move_group1, 0, 0, -prepare_some_distance);
     if(recordPointData.model == 0)
     {
-        if((recordPointData.stepNum >= 4 && recordPointData.stepNum <=7) || recordPointData.stepNum == 9)
+        if((recordPointData.stepNum >= 4 && recordPointData.stepNum <=7) || recordPointData.stepNum == 10)
             robotMoveCartesianUnit2(move_group0, 0, prepare_some_distance, 0);
-        else if(recordPointData.stepNum >= 10 && recordPointData.stepNum <= 13)
+        else if(recordPointData.stepNum >= 11 && recordPointData.stepNum <= 14)
             robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance, 0);
-        else if(recordPointData.stepNum == 8)
+        else if(recordPointData.stepNum == 9)
             robotMoveCartesianUnit2(move_group0, 0, prepare_some_distance*0.707, prepare_some_distance*0.707);
-        else if(recordPointData.stepNum == 14)
+        else if(recordPointData.stepNum == 16)
             robotMoveCartesianUnit2(move_group1, 0, -prepare_some_distance*0.707, prepare_some_distance*0.707);
+    }
+    else if(recordPointData.stepNum == 17)
+    {
+        robotMoveCartesianUnit2(move_group0, 0, 0, -prepare_some_distance);
     }
     return 0;
 }
@@ -1436,6 +1482,13 @@ int RubikCubeSolve::updataPointData()
                 return 0;
             }
         recordPose(1, recordPointData.poseName[recordPointData.stepNum], false);
+        if(recordPointData.stepNum == 3)
+        {
+            geometry_msgs::PoseStamped newPoseStamped;
+            newPoseStamped = move_group1.getCurrentPose();
+            newPoseStamped.pose.position.y += prepare_some_distance;
+            robotPose[1][3] = newPoseStamped;
+        }
     }
     else if(recordPointData.model == 1)
     {

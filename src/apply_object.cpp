@@ -69,7 +69,8 @@ void applyObject(ros::Publisher& planning_scene_diff_publisher, moveit_msgs::Pla
                                         //  {0.01, 2.0, 1.5, -0.38, 0.3, 1.5, 0.0, 0.0, 0.0},
                                          {2.0, 0.01, 1.5, 0.0, 1.5, 1.5, 0.0, 0.0, 0.0},
                                          {2.0, 0.01, 1.5, 0.0, -0.45, 1.5, 0.0, 0.0, 0.0},
-                                         {0.1, 0.1, 0.105, 0.5, 0.67, 1.0675, 0.0, 0.0, 0.0}});
+                                        //  {0.1, 0.1, 0.105, 0.5, 0.67, 1.0675, 0.0, 0.0, 0.0}
+                                         });
   ROS_INFO("applyObject....");
   std::vector<moveit_msgs::CollisionObject> obj;
   addCollisionObjects(obj, data, "world","box");

@@ -163,6 +163,7 @@ public:
     int Cartesian();
     int updataPointData();
     bool pickCube();
+    bool setStartState(moveit::planning_interface::MoveGroupInterface& group);
 
 private:
     void getPrepareSomeDistanceRobotPose();
@@ -177,7 +178,10 @@ private:
     bool recordPoseCallBack(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
     bool goToPoseServer(rubik_cube_solve::recordPoseStamped::Request& req, rubik_cube_solve::recordPoseStamped::Response& rep);
     bool rbRunCommand(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep);
+
     bool magicMoveToPointCallback(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep);
+    bool magicStepMoveCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
+    bool magicRecordPoseCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
 
     // bool placeCubeCallback(std_srvs::Empty::Request& req, std_srvs::Empty::Response& rep);
     bool placeCubeCallback(rb_msgAndSrv::rb_ArrayAndBool::Request& req, rb_msgAndSrv::rb_ArrayAndBool::Response& rep);
@@ -195,7 +199,12 @@ private:
     ros::ServiceServer nextStep;
     ros::ServiceServer lineCartesian;
     ros::ServiceServer recordPoint;
+
     ros::ServiceServer magicMoveToPoint;
+    ros::ServiceServer magicStepMove;
+    ros::ServiceServer magicRecordPose;
+
+
 
     ros::ServiceClient receiveSolve;
     ros::ServiceClient shootClient;
@@ -242,4 +251,5 @@ private:
     bool isSwopOver = false;
     bool isTest = false;
     bool placeCubeRobot;
+    int overStepflag = 0x0000;
 };
