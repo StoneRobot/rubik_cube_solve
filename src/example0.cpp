@@ -210,17 +210,36 @@ int main(int argc, char *argv[])
     ros::NodeHandle nh;
     ros::AsyncSpinner spinner(2);
     spinner.start();
-    moveit::planning_interface::MoveGroupInterface move_group0("arm0");
-    moveit::planning_interface::MoveGroupInterface move_group1("arm1");
-    std::string posesFilePath;
-    nh.getParam("/poses_file_path", posesFilePath);
-    getPoseStamped(move_group0, move_group1);
-    long cnt = 0;
-    std::cin.ignore();
-    writePoseFile(posesFilePath);
-    while (ros::ok())
+    moveit::planning_interface::MoveGroupInterface move_group("arm");
+    geometry_msgs::PoseStamped pose = move_group.getCurrentPose();
+    std::vector<double> joint = move_group.getCurrentJointValues();
+    joint[0] += 0.1;
+    // move_group.setJointValueTarget(joint);
+    ROS_INFO_STREAM(pose);
+    pose.pose.position.x += 0.03;
+    move_group.setPoseTarget(pose);
+    ROS_INFO_STREAM(pose);
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    move_group.setPlanningTime(10);
+    bool flag;
+    do
     {
-        example(move_group0, move_group1);
-    }
+        flag = (move_group.plan(my_plan)  == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+        /* code */
+    } while (!flag && ros::ok());
+    move_group.move();
+    ros::waitForShutdown();
+
+    // moveit::planning_interface::MoveGroupInterface move_group1("arm1");
+    // std::string posesFilePath;
+    // nh.getParam("/poses_file_path", posesFilePath);
+    // getPoseStamped(move_group0, move_group1);
+    // long cnt = 0;
+    // std::cin.ignore();
+    // writePoseFile(posesFilePath);
+    // while (ros::ok())
+    // {
+    //     example(move_group0, move_group1);
+    // }
     return 0;
 }

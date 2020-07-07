@@ -2,7 +2,7 @@
     <arg name="prepare_some_distance" default="0.05" />
     <arg name="record_pose_path" default="$(find rubik_cube_solve)" />
     <arg name="test" default="1" />
-    <arg name="speed" default="0.7" />
+    <arg name="speed" default="0.8" />
     <arg name="testRobot" default="0" />
 
     <include file="$(find rubik_cube_solve)/launch/load_pose_path.launch" />
