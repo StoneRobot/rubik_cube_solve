@@ -44,8 +44,8 @@ move_group1{group1}
     nh.getParam("/rubik_cube_solve/speed", speed);
     // move_group0.setPlanningTime(10);
     // move_group1.setPlanningTime(10);
-    move_group0.setMaxAccelerationScalingFactor(0.1);
-    move_group1.setMaxAccelerationScalingFactor(0.1);
+    // move_group0.setMaxAccelerationScalingFactor(0.1);
+    // move_group1.setMaxAccelerationScalingFactor(0.1);
     move_group0.setMaxVelocityScalingFactor(speed);
     move_group1.setMaxVelocityScalingFactor(speed);
     move_group0.setGoalPositionTolerance(0.0001);
@@ -372,13 +372,11 @@ bool RubikCubeSolve::InitializationStateAction()
 void RubikCubeSolve::setOrientationConstraints(moveit::planning_interface::MoveGroupInterface& move_group, \
                                 double x_axis_tolerance,double y_axis_tolerance,double z_axis_tolerance)
 {
-    // setJointConstraints(move_group);
     static int cnt = 0;
     moveit_msgs::OrientationConstraint ocm;
     ocm.link_name = move_group.getEndEffectorLink();
     ocm.header.frame_id = "world";
     ocm.orientation = move_group.getCurrentPose().pose.orientation;
-    // ROS_INFO_STREAM(move_group.getCurrentPose());
     ocm.absolute_x_axis_tolerance = x_axis_tolerance;
     ocm.absolute_y_axis_tolerance = y_axis_tolerance;
     ocm.absolute_z_axis_tolerance = z_axis_tolerance;
@@ -419,6 +417,8 @@ void RubikCubeSolve::setPositionConstraints(moveit::planning_interface::MoveGrou
 void RubikCubeSolve::setJointConstraints(moveit::planning_interface::MoveGroupInterface& move_group)
 {
     moveit_msgs::JointConstraint jointCon;
+    moveit_msgs::Constraints con;
+    // 4 joint
     if(move_group.getName() == "arm0")
     {
         jointCon.joint_name = "joint_4";
@@ -434,46 +434,55 @@ void RubikCubeSolve::setJointConstraints(moveit::planning_interface::MoveGroupIn
         jointCon.tolerance_below = 2.0;
     }
     jointCon.weight = 1;
-    moveit_msgs::Constraints con;
+
     con.joint_constraints.push_back(jointCon);
     move_group.setPathConstraints(con);
-    move_group.setPlanningTime(2.0);
+    move_group.setPlanningTime(1.0);
 }
 
-void RubikCubeSolve::setConstraints(moveit::planning_interface::MoveGroupInterface& move_group, \
-                                                    double x_axis_tolerance, double y_axis_tolerance,double z_axis_tolerance)
+void RubikCubeSolve::setJointAllConstraints(moveit::planning_interface::MoveGroupInterface& move_group)
 {
-    moveit_msgs::Constraints con;
     moveit_msgs::JointConstraint jointCon;
+    moveit_msgs::Constraints con;
+    // set 6 joint
+    std::vector<double> joint = move_group.getCurrentJointValues();
+    if(move_group.getName() == "arm0")
+    {
+        jointCon.joint_name = "joint_6";
+    }
+    else
+    {
+        jointCon.joint_name = "R_joint_6";
+    }
+    jointCon.position = joint[5];
+    jointCon.tolerance_above = 4.8844;
+    jointCon.tolerance_below = 4.8844;
+    jointCon.weight = 0.9;
+    con.joint_constraints.push_back(jointCon);
+
+    // 4 joint
     if(move_group.getName() == "arm0")
     {
         jointCon.joint_name = "joint_4";
         jointCon.position = 1.0;
+        jointCon.tolerance_above = 2;
+        jointCon.tolerance_below = 1.5;
     }
     else
     {
         jointCon.joint_name = "R_joint_4";
         jointCon.position = -1.0;
+        jointCon.tolerance_above = 1.5;
+        jointCon.tolerance_below = 2.0;
     }
-    jointCon.tolerance_above = 2.0;
-    jointCon.tolerance_below = 2.0;
     jointCon.weight = 1;
+
     con.joint_constraints.push_back(jointCon);
-
-    moveit_msgs::OrientationConstraint ocm;
-    ocm.link_name = move_group.getEndEffectorLink();
-    ocm.header.frame_id = "world";
-    ocm.orientation = move_group.getCurrentPose().pose.orientation;
-
-    ocm.absolute_x_axis_tolerance = x_axis_tolerance;
-    ocm.absolute_y_axis_tolerance = y_axis_tolerance;
-    ocm.absolute_z_axis_tolerance = z_axis_tolerance;
-    ocm.weight = 1.0;
-
-    con.orientation_constraints.push_back(ocm);
     move_group.setPathConstraints(con);
-    move_group.setPlanningTime(5.0);
+    move_group.setPlanningTime(1.0);
 }
+
+
 
 void RubikCubeSolve::clearConstraints(moveit::planning_interface::MoveGroupInterface& move_group)
 {
@@ -741,6 +750,7 @@ void RubikCubeSolve::spinOnce()
         {
             ROS_INFO("start");
             photograph();
+            setRobotEnable();
             ros::Duration(1.0).sleep();
         }
         if(runModel == 2 || runModel == 4)
@@ -764,10 +774,10 @@ void RubikCubeSolve::spinOnce()
                 cnt ++;
                 msg.data[1] = i+1;
                 progressPub.publish(msg);
-                // if(cnt % 10 == 0)
-                // {
-                //     setRobotEnable();
-                // }
+                if(cnt % 10 == 0)
+                {
+                    setRobotEnable();
+                }
             }
             std::vector<std::vector<int> >().swap(rubikCubeSolvetransformData);
             Cstate.isFinish = true;
@@ -802,7 +812,9 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
 {
     openGripper(capture_move_group);
     setAndMove(capture_move_group, pose);
-    // 到达
+    // 
+    // if(capture_move_group.getName() == "arm1")
+        
     robotMoveCartesianUnit2(capture_move_group, 0, pow(-1, Adata.captureRobot)*prepare_some_distance, 0);
     closeGripper(capture_move_group);
 
@@ -881,7 +893,7 @@ bool RubikCubeSolve::openGripper(moveit::planning_interface::MoveGroupInterface&
             ROS_INFO("arm1 openGripper ");
             flag = openGripper_client1.call(srv);
         }
-        ros::Duration(2).sleep();
+        ros::Duration(1).sleep();
    }
     return flag;
 }
@@ -901,7 +913,7 @@ bool RubikCubeSolve::closeGripper(moveit::planning_interface::MoveGroupInterface
             ROS_INFO("arm1 closeGripper ");
             flag = closeGripper_client1.call(srv);
         }
-        ros::Duration(2).sleep();
+        ros::Duration(1).sleep();
    }
     return flag;
 }
@@ -1046,6 +1058,9 @@ bool RubikCubeSolve::transformFrame(geometry_msgs::PoseStamped& poseStamped, std
 moveit::planning_interface::MoveItErrorCode RubikCubeSolve::setAndMove(moveit::planning_interface::MoveGroupInterface& move_group, \
                                                                         geometry_msgs::PoseStamped& poseStamped)
 {
+    // if(move_group.getName() == "arm1")
+    //     ros::Duration(1.0).sleep();
+    setJointAllConstraints(move_group);
     std::vector<double> joint = move_group.getCurrentJointValues();
     moveit_msgs::RobotState r;
     r.joint_state.position = joint;
@@ -1054,7 +1069,10 @@ moveit::planning_interface::MoveItErrorCode RubikCubeSolve::setAndMove(moveit::p
 
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
     move_group.setPoseTarget(poseStamped);
-    return this->moveGroupPlanAndMove(move_group, my_plan);
+    moveit::planning_interface::MoveItErrorCode code;
+    code = this->moveGroupPlanAndMove(move_group, my_plan);
+    clearConstraints(move_group);
+    return code;
 }
 
 moveit::planning_interface::MoveItErrorCode RubikCubeSolve::moveGroupPlanAndMove(moveit::planning_interface::MoveGroupInterface& move_group, \
@@ -1257,6 +1275,8 @@ bool RubikCubeSolve::writePoseOnceFile(const std::string& name, const geometry_m
 
 void RubikCubeSolve::robotMoveCartesianUnit2(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z)
 {
+    // if(group.getName() == "arm1")
+    ros::Duration(1).sleep();
     std::vector<double>joint = group.getCurrentJointValues();
     moveit_msgs::RobotState r;
     r.joint_state.position = joint;

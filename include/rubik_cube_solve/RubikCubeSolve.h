@@ -139,9 +139,8 @@ public:
     void setPositionConstraints(moveit::planning_interface::MoveGroupInterface& group);
 
     void setJointConstraints(moveit::planning_interface::MoveGroupInterface& group);
-    void setConstraints(moveit::planning_interface::MoveGroupInterface& move_group, \
-                                                    double x_axis_tolerance=6.3, double y_axis_tolerance=6.3,double z_axis_tolerance=0.8);
 
+    void setJointAllConstraints(moveit::planning_interface::MoveGroupInterface& move_group);
     void clearConstraints(moveit::planning_interface::MoveGroupInterface& group);
 
     void goPreparePose();
