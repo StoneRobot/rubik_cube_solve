@@ -8,6 +8,8 @@
 #include <std_srvs/Empty.h>
 #include <std_msgs/Int8MultiArray.h>
 #include <std_msgs/Bool.h>
+#include <moveit/robot_state/robot_state.h>
+#include <moveit/robot_model/robot_model.h>
 
 
 #include "rubik_cube_solve/rubik_cube_solve_cmd.h"
@@ -19,6 +21,12 @@
 #include "cubeParse/SolveCube.h"
 #include "rb_msgAndSrv/rb_DoubleBool.h"
 #include "rb_msgAndSrv/rb_ArrayAndBool.h"
+/****/
+#include "hirop_msgs/moveToSiglePose.h"
+#include "hirop_msgs/moveToMultiPose.h"
+#include "hirop_msgs/moveLine.h"
+#include "hirop_msgs/moveSigleAixs.h"
+/****/
 
 #include <vector>
 #include <iostream>
@@ -211,6 +219,31 @@ private:
     ros::ServiceClient closeGripper_client0;
     ros::ServiceClient openGripper_client1;
     ros::ServiceClient closeGripper_client1;
+
+    /*****/
+    ros::ServiceClient l_moveToSiglePose_client;
+    ros::ServiceClient r_moveToSiglePose_client;
+
+    ros::ServiceClient l_moveToMultiPose_client;
+    ros::ServiceClient r_moveToMultiPose_client;
+
+    ros::ServiceClient l_moveLine_client;
+    ros::ServiceClient r_moveLine_client;
+
+    ros::ServiceClient l_SigleAixs_client;
+    ros::ServiceClient r_SigleAixs_client;
+    void initMotionClient();
+
+    moveit::core::RobotModelConstPtr robotModel;
+    moveit::core::RobotStatePtr robotState;
+    robot_state::JointModelGroup* jointModelGroup;
+
+    std::vector<double> getRobotState(moveit::planning_interface::MoveGroupInterface& move_group, geometry_msgs::PoseStamped& poseStamped);
+    bool setAndMoveClient(moveit::planning_interface::MoveGroupInterface& move_group, \
+                        geometry_msgs::PoseStamped& poseStamped);
+    bool robotMoveCartesianUnitClient(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z);
+    bool setJoint6ValueClient(moveit::planning_interface::MoveGroupInterface& rotate_move_group, int angle);
+    /*****/
 
     ros::Subscriber stopMoveSub;
     ros::Subscriber rubikCubeSolveData_sub;
