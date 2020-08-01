@@ -60,36 +60,62 @@ move_group1{group1}
 /****/
 void RubikCubeSolve::initMotionClient()
 {
+    l_motionStart_client = nh.serviceClient<hirop_msgs::motionBridgeStart>("/hsr_left/motionBridgeStart");
+    r_motionStart_client = nh.serviceClient<hirop_msgs::motionBridgeStart>("/hsr_right/motionBridgeStart");
+
     l_moveToSiglePose_client = nh.serviceClient<hirop_msgs::moveToSiglePose>("/hsr_left/moveToSiglePose");
-    r_moveToSiglePose_client = nh.serviceClient<hirop_msgs::moveToSiglePose>("/hsr_left/moveToSiglePose");
+    r_moveToSiglePose_client = nh.serviceClient<hirop_msgs::moveToSiglePose>("/hsr_right/moveToSiglePose");
 
     l_moveToMultiPose_client = nh.serviceClient<hirop_msgs::moveToMultiPose>("/hsr_left/moveToMultiPose");
-    r_moveToMultiPose_client = nh.serviceClient<hirop_msgs::moveToMultiPose>("/hsr_left/moveToMultiPose");
+    r_moveToMultiPose_client = nh.serviceClient<hirop_msgs::moveToMultiPose>("/hsr_right/moveToMultiPose");
 
     l_moveLine_client = nh.serviceClient<hirop_msgs::moveLine>("/hsr_left/moveLine");
-    r_moveLine_client = nh.serviceClient<hirop_msgs::moveLine>("/hsr_left/moveLine");
+    r_moveLine_client = nh.serviceClient<hirop_msgs::moveLine>("/hsr_right/moveLine");
 
     l_SigleAixs_client = nh.serviceClient<hirop_msgs::moveSigleAixs>("/hsr_left/SigleAixs");
-    r_SigleAixs_client = nh.serviceClient<hirop_msgs::moveSigleAixs>("/hsr_left/SigleAixs");
+    r_SigleAixs_client = nh.serviceClient<hirop_msgs::moveSigleAixs>("/hsr_right/SigleAixs");
+
+    start(0);
+    start(1);
+}
+
+void RubikCubeSolve::start(int robotNum)
+{
+    hirop_msgs::motionBridgeStart srv;
+    if(robotNum == 0)
+    {
+        srv.request.endLink_name = move_group0.getEndEffectorLink();
+        srv.request.moveGroup_name = move_group0.getName();
+        l_motionStart_client.call(srv);
+
+    }
+    else
+    {
+        srv.request.endLink_name = move_group1.getEndEffectorLink();
+        srv.request.moveGroup_name = move_group1.getName();
+        r_motionStart_client.call(srv);
+    }
 }
 
 std::vector<double> RubikCubeSolve::getRobotState(moveit::planning_interface::MoveGroupInterface& move_group, geometry_msgs::PoseStamped& poseStamped)
 {
+    // ROS_INFO_STREAM("robot_state: " << poseStamped);
     setStartState(move_group);
     unsigned int attempts = 10;
     double timeout = 0.1;
-    robotModel = move_group.getRobotModel();
-    robotState = move_group.getCurrentState();
-    jointModelGroup = const_cast<robot_state::JointModelGroup*>(robotModel->getJointModelGroup(move_group.getName()));
+    moveit::core::RobotModelConstPtr robotModel = move_group.getRobotModel();
+    moveit::core::RobotStatePtr robotState = move_group.getCurrentState();
+    const robot_state::JointModelGroup* jointModelGroup = robotModel->getJointModelGroup(move_group.getName());
     std::vector<double> joints;
+    bool flag;
     for(int i=0; i<2; i++)
     {
-        bool flag;
         flag = robotState->setFromIK(jointModelGroup, poseStamped.pose, attempts, timeout);
         if(flag)
         {
             ROS_INFO("IK SUCCEED");
-            robotState->copyJointGroupVelocities(jointModelGroup, joints);
+            robotState->copyJointGroupPositions(jointModelGroup, joints);
+            // ROS_INFO_STREAM(joints[0] << " " << joints[1] << " " << joints[2] << " " << joints[3] << " " << joints[4] << " " << joints[5]);
             return joints;
         }
     }
@@ -117,6 +143,38 @@ bool RubikCubeSolve::setAndMoveClient(moveit::planning_interface::MoveGroupInter
     else
     {
         if(r_moveToSiglePose_client.call(srv))
+        {
+            ROS_INFO(srv.response.info.c_str());
+            return srv.response.is_success;
+        }
+    }
+    return false;
+}
+
+bool RubikCubeSolve::setAndMoveMultiClient(moveit::planning_interface::MoveGroupInterface& move_group, \
+                        std::vector<geometry_msgs::PoseStamped>& poseStamped)
+{
+    hirop_msgs::moveToMultiPose srv;
+    srv.request.poseList_joints_angle.resize(poseStamped.size());
+    for(int i=0; i < poseStamped.size(); i++)
+    {
+        std::vector<double> joint;
+        joint = getRobotState(move_group, poseStamped[i]);
+        if(joint.empty())
+            return false;
+        srv.request.poseList_joints_angle[i].joints_angle.data = joint;
+    }
+    if(move_group.getName() == "arm0")
+    {
+        if(l_moveToMultiPose_client.call(srv))
+        {
+            ROS_INFO(srv.response.info.c_str());
+            return srv.response.is_success;
+        }
+    }
+    else
+    {
+        if(r_moveToMultiPose_client.call(srv))
         {
             ROS_INFO(srv.response.info.c_str());
             return srv.response.is_success;
@@ -154,6 +212,7 @@ bool RubikCubeSolve::setJoint6ValueClient(moveit::planning_interface::MoveGroupI
 {
     setStartState(rotate_move_group);
     std::vector<double> joint = rotate_move_group.getCurrentJointValues();
+    double before = joint[5];
     double a = static_cast<double>(angle);
     a = angle2rad(a);
     joint[5] += a;
@@ -168,11 +227,13 @@ bool RubikCubeSolve::setJoint6ValueClient(moveit::planning_interface::MoveGroupI
         joint[5] -= 4*a;
     }
     hirop_msgs::moveSigleAixs srv;
+    // joint[5] /= M_PI;
+    // joint[5] *= 180;
     srv.request.angle = joint[5];
     srv.request.index_axis = 5;
     if(rotate_move_group.getName() == "arm0")
     {
-        if(l_moveLine_client.call(srv))
+        if(l_SigleAixs_client.call(srv))
         {
             ROS_INFO(srv.response.info.c_str());
             return srv.response.is_success;
@@ -180,15 +241,16 @@ bool RubikCubeSolve::setJoint6ValueClient(moveit::planning_interface::MoveGroupI
     }
     else
     {
-        if(r_moveLine_client.call(srv))
+        if(r_SigleAixs_client.call(srv))
         {
             ROS_INFO(srv.response.info.c_str());
             return srv.response.is_success;
         }
     }
+    setStartState(rotate_move_group);
+    std::vector<double> j = rotate_move_group.getCurrentJointValues();
     return false;
 }
-
 
 /****/
 
@@ -615,8 +677,6 @@ void RubikCubeSolve::setJointAllConstraints(moveit::planning_interface::MoveGrou
     move_group.setPlanningTime(1.0);
 }
 
-
-
 void RubikCubeSolve::clearConstraints(moveit::planning_interface::MoveGroupInterface& move_group)
 {
     move_group.clearPathConstraints();
@@ -929,6 +989,7 @@ void RubikCubeSolve::spinOnce()
 //TODO 抓取 拧魔方
 void RubikCubeSolve::action()
 {
+    stepCnt = 0;
     if(Adata.isSwop)
     {
         // 拧魔方
@@ -945,9 +1006,14 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
 {
     openGripper(capture_move_group);
 
-    setAndMoveClient(capture_move_group, pose);       
+    geometry_msgs::PoseStamped targetPose;
+    std::vector<geometry_msgs::PoseStamped> wayPoint;
+    wayPoint.push_back(pose);
+    targetPose = pose;
+    targetPose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
+    wayPoint.push_back(targetPose);
+    setAndMoveMultiClient(capture_move_group, wayPoint);
 
-    robotMoveCartesianUnitClient(capture_move_group, 0, pow(-1, Adata.captureRobot)*prepare_some_distance, 0);
     closeGripper(capture_move_group);
 
     openGripper(rotate_move_group);
@@ -955,8 +1021,14 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     Cstate.captureRobot = Adata.captureRobot;
     Cstate.capturePoint = Adata.capturePoint;
 
-    robotMoveCartesianUnitClient(rotate_move_group, 0, pow(-1, Adata.captureRobot)*prepare_some_distance, 0);
-    setAndMoveClient(rotate_move_group, robotPose[Adata.otherRobot][0]);
+    std::vector<geometry_msgs::PoseStamped> wayPoint2;
+    setStartState(rotate_move_group);
+    geometry_msgs::PoseStamped targetPose2 = rotate_move_group.getCurrentPose();
+    targetPose2.pose.position.y +=  pow(-1, Adata.captureRobot)*prepare_some_distance;
+    wayPoint2.push_back(targetPose2);
+    wayPoint2.push_back(robotPose[Adata.otherRobot][0]);
+    setAndMoveMultiClient(rotate_move_group, wayPoint2);
+
     return true;
 }
 
@@ -967,8 +1039,11 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
 {
     if(Adata.space == UP)
     {
-        setAndMoveClient(capture_move_group, robotPose[Adata.captureRobot][3]);
-        setAndMoveClient(capture_move_group, robotPose[Adata.captureRobot][6]);
+        std::vector<geometry_msgs::PoseStamped> wayPoints;
+        wayPoints.push_back(robotPose[Adata.captureRobot][3]);
+        wayPoints.push_back(robotPose[Adata.captureRobot][6]);
+        setAndMoveMultiClient(capture_move_group, wayPoints);
+        // 
         rotateCube(rotate_move_group, robotPose[Adata.otherRobot][7], Adata.angle);
     }
     else
@@ -976,20 +1051,33 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
         rotateCube(rotate_move_group, robotPose[Adata.otherRobot][5], Adata.angle);
     }
     // 拧魔方的回原位
+    geometry_msgs::PoseStamped targetPose;
+    std::vector<geometry_msgs::PoseStamped> wayPoints2;
+    setStartState(rotate_move_group);
+    targetPose = rotate_move_group.getCurrentPose();
     if(Adata.space == UP)
     {
-        robotMoveCartesianUnitClient(rotate_move_group, 0, -pow(-1, Adata.otherRobot)*prepare_some_distance*0.7071067, -0.7071067*prepare_some_distance);
+        targetPose.pose.position.y -= pow(-1, Adata.otherRobot)*prepare_some_distance*0.7071067;
+        targetPose.pose.position.z -= 0.7071067*prepare_some_distance;
     }
     else
     {
-        robotMoveCartesianUnitClient(rotate_move_group, 0, -pow(-1, Adata.otherRobot)*prepare_some_distance, 0);
+        targetPose.pose.position.y -= pow(-1, Adata.otherRobot)*prepare_some_distance;
     }
-    setAndMoveClient(rotate_move_group, robotPose[Adata.otherRobot][0]);
+    wayPoints2.push_back(targetPose);
+    wayPoints2.push_back(robotPose[Adata.otherRobot][0]);
+    setAndMoveMultiClient(rotate_move_group, wayPoints2);
     // 抓住魔方的回原位
     pose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
+
+    std::vector<geometry_msgs::PoseStamped> wayPoints3;
     if(Adata.space == UP)
-        setAndMoveClient(capture_move_group, robotPose[Adata.captureRobot][3]);
-    setAndMoveClient(capture_move_group, pose);
+    {
+        ROS_ERROR_STREAM("stepCnt: " << 5);
+        wayPoints3.push_back(robotPose[Adata.captureRobot][3]);
+    }
+    wayPoints3.push_back(pose);
+    setAndMoveMultiClient(capture_move_group, wayPoints3);
     return true;
 }
 
@@ -1017,39 +1105,39 @@ bool RubikCubeSolve::openGripper(moveit::planning_interface::MoveGroupInterface&
 {
     bool flag = true;
    hirop_msgs::openGripper srv;
-   if(!isStop)
-   {
-        if(move_group.getName() == "arm0"){
-            flag = openGripper_client0.call(srv);
-            ROS_INFO("arm0 openGripper ");
-        }
-        else
-        {
-            ROS_INFO("arm1 openGripper ");
-            flag = openGripper_client1.call(srv);
-        }
-        ros::Duration(1).sleep();
-   }
+//    if(!isStop)
+//    {
+//         if(move_group.getName() == "arm0"){
+//             flag = openGripper_client0.call(srv);
+//             ROS_INFO("arm0 openGripper ");
+//         }
+//         else
+//         {
+//             ROS_INFO("arm1 openGripper ");
+//             flag = openGripper_client1.call(srv);
+//         }
+//         ros::Duration(1).sleep();
+//    }
     return flag;
 }
 bool RubikCubeSolve::closeGripper(moveit::planning_interface::MoveGroupInterface& move_group)
 {
    bool flag = true;
    hirop_msgs::closeGripper srv;
-   if(!isStop)
-   {
-        if(move_group.getName() == "arm0")
-        {
-            ROS_INFO("arm0 closeGripper ");
-            flag = closeGripper_client0.call(srv);
-        }
-        else
-        {
-            ROS_INFO("arm1 closeGripper ");
-            flag = closeGripper_client1.call(srv);
-        }
-        ros::Duration(1).sleep();
-   }
+//    if(!isStop)
+//    {
+//         if(move_group.getName() == "arm0")
+//         {
+//             ROS_INFO("arm0 closeGripper ");
+//             flag = closeGripper_client0.call(srv);
+//         }
+//         else
+//         {
+//             ROS_INFO("arm1 closeGripper ");
+//             flag = closeGripper_client1.call(srv);
+//         }
+//         ros::Duration(1).sleep();
+//    }
     return flag;
 }
 
@@ -1438,6 +1526,7 @@ void RubikCubeSolve::robotMoveCartesianUnit2(moveit::planning_interface::MoveGro
 
 void RubikCubeSolve::backHome(int robot)
 {
+    setStartState(getMoveGroup(robot));
     if(!isStop)
     {
         ROS_INFO_STREAM("back home");

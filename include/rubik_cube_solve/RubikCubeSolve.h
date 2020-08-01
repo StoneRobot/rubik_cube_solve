@@ -26,6 +26,7 @@
 #include "hirop_msgs/moveToMultiPose.h"
 #include "hirop_msgs/moveLine.h"
 #include "hirop_msgs/moveSigleAixs.h"
+#include "hirop_msgs/motionBridgeStart.h"
 /****/
 
 #include <vector>
@@ -220,7 +221,10 @@ private:
     ros::ServiceClient openGripper_client1;
     ros::ServiceClient closeGripper_client1;
 
-    /*****/
+    /***** motion ***/
+    ros::ServiceClient l_motionStart_client;
+    ros::ServiceClient r_motionStart_client;
+
     ros::ServiceClient l_moveToSiglePose_client;
     ros::ServiceClient r_moveToSiglePose_client;
 
@@ -233,16 +237,18 @@ private:
     ros::ServiceClient l_SigleAixs_client;
     ros::ServiceClient r_SigleAixs_client;
     void initMotionClient();
+    void start(int robotNum);
 
-    moveit::core::RobotModelConstPtr robotModel;
-    moveit::core::RobotStatePtr robotState;
-    robot_state::JointModelGroup* jointModelGroup;
+
 
     std::vector<double> getRobotState(moveit::planning_interface::MoveGroupInterface& move_group, geometry_msgs::PoseStamped& poseStamped);
     bool setAndMoveClient(moveit::planning_interface::MoveGroupInterface& move_group, \
                         geometry_msgs::PoseStamped& poseStamped);
     bool robotMoveCartesianUnitClient(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z);
     bool setJoint6ValueClient(moveit::planning_interface::MoveGroupInterface& rotate_move_group, int angle);
+    bool setAndMoveMultiClient(moveit::planning_interface::MoveGroupInterface& move_group, \
+                        std::vector<geometry_msgs::PoseStamped>& poseStamped);
+    int stepCnt = 0;
     /*****/
 
     ros::Subscriber stopMoveSub;
