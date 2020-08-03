@@ -108,13 +108,19 @@ std::vector<double> RubikCubeSolve::getRobotState(moveit::planning_interface::Mo
     const robot_state::JointModelGroup* jointModelGroup = robotModel->getJointModelGroup(move_group.getName());
     std::vector<double> joints;
     bool flag;
-    for(int i=0; i<2; i++)
+    for(int i=0; i<10; i++)
     {
         flag = robotState->setFromIK(jointModelGroup, poseStamped.pose, attempts, timeout);
         if(flag)
         {
-            ROS_INFO("IK SUCCEED");
             robotState->copyJointGroupPositions(jointModelGroup, joints);
+            if(move_group.getName() == "arm0")
+                if(joints[3] < -0.5)
+                    continue;
+            else
+                if(joints[3] > 0.5)
+                    continue;            
+            ROS_INFO("IK SUCCEED");
             // ROS_INFO_STREAM(joints[0] << " " << joints[1] << " " << joints[2] << " " << joints[3] << " " << joints[4] << " " << joints[5]);
             return joints;
         }
