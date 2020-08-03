@@ -177,11 +177,15 @@ public:
     bool pickCube();
     bool setStartState(moveit::planning_interface::MoveGroupInterface& group);
 
-    bool setAndMoveMulti(moveit::planning_interface::MoveGroupInterface& group, std::vector<geometry_msgs::PoseStamped>& poses);
+    bool setAndMoveMulti(moveit::planning_interface::MoveGroupInterface& group, std::vector<geometry_msgs::PoseStamped>& poses, int type);
     bool RobotTrajectory(moveit::planning_interface::MoveGroupInterface& group, \
                         geometry_msgs::PoseStamped& TargetPose, \
                         moveit_msgs::RobotTrajectory& trajectory,\
                         robot_state::RobotState& r);
+    bool RobotTrajectoryLine(moveit::planning_interface::MoveGroupInterface& group, \
+                geometry_msgs::PoseStamped& TargetPose, 
+                moveit_msgs::RobotTrajectory& trajectory, \
+                robot_state::RobotState& r);
 
 private:
     void getPrepareSomeDistanceRobotPose();

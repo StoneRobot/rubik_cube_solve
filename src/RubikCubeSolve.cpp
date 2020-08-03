@@ -1013,7 +1013,7 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     targetPose = pose;
     targetPose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
     wayPoint.push_back(targetPose);
-    setAndMoveMulti(capture_move_group, wayPoint);
+    setAndMoveMulti(capture_move_group, wayPoint, 0);
 
     closeGripper(capture_move_group);
 
@@ -1028,7 +1028,7 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     targetPose2.pose.position.y +=  pow(-1, Adata.captureRobot)*prepare_some_distance;
     wayPoint2.push_back(targetPose2);
     wayPoint2.push_back(robotPose[Adata.otherRobot][0]);
-    setAndMoveMulti(rotate_move_group, wayPoint2);
+    setAndMoveMulti(rotate_move_group, wayPoint2, 1);
 
     return true;
 }
@@ -1043,7 +1043,7 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
         std::vector<geometry_msgs::PoseStamped> wayPoints;
         wayPoints.push_back(robotPose[Adata.captureRobot][3]);
         wayPoints.push_back(robotPose[Adata.captureRobot][6]);
-        setAndMoveMulti(capture_move_group, wayPoints);
+        setAndMoveMulti(capture_move_group, wayPoints, 2);
         // 
         rotateCube(rotate_move_group, robotPose[Adata.otherRobot][7], Adata.angle);
     }
@@ -1067,7 +1067,7 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
     }
     wayPoints2.push_back(targetPose);
     wayPoints2.push_back(robotPose[Adata.otherRobot][0]);
-    setAndMoveMulti(rotate_move_group, wayPoints2);
+    setAndMoveMulti(rotate_move_group, wayPoints2, 1);
     // 抓住魔方的回原位
     pose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
 
@@ -1078,7 +1078,7 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
         wayPoints3.push_back(robotPose[Adata.captureRobot][3]);
     }
     wayPoints3.push_back(pose);
-    setAndMoveMulti(capture_move_group, wayPoints3);
+    setAndMoveMulti(capture_move_group, wayPoints3, 2);
     return true;
 }
 
@@ -1743,43 +1743,91 @@ int RubikCubeSolve::updataPointData()
 }
 
 
-bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterface& group, std::vector<geometry_msgs::PoseStamped>& poses)
+bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterface& group, std::vector<geometry_msgs::PoseStamped>& poses, int type)
 {
     setStartState(group);
-    setJointAllConstraints(group);
+    
     bool flag;
     std::vector<moveit_msgs::RobotTrajectory> trajectory;
     int cnt=poses.size();
     trajectory.resize(cnt);
+    // 获取现在状态
     robot_state::RobotState r(*group.getCurrentState());
     const robot_state::JointModelGroup* jointGroup = r.getJointModelGroup(group.getName());
     std::vector<double> joints = group.getCurrentJointValues();
     r.setJointGroupPositions(jointGroup, joints);
-    // 获取轨迹
-    for(int i=0; i<cnt; i++)
+    // 选择轨迹组合的类型
+    // 0: 曲线 + 直线
+    // 1: 直线 + 曲线
+    // 2: N个曲线
+    if(type == 0)
     {
-
-        if(!RobotTrajectory(group, poses[i], trajectory[i], r))
+        // 获取轨迹
+        setJointAllConstraints(group);
+        if(!RobotTrajectory(group, poses[0], trajectory[0], r))
         {
-            ROS_INFO_STREAM("get Trajectory failed" << i);
+            ROS_INFO_STREAM("get Trajectory failed" << 0);
             return false;
         }
-        int end = trajectory[i].joint_trajectory.points.size() - 1;
-        r.setJointGroupPositions(jointGroup, trajectory[i].joint_trajectory.points[end].positions);
-        // r.joint_state.position = trajectory[i].joint_trajectory.points[end].positions;
-        ROS_INFO_STREAM("get Trajectory" << i);
+        clearConstraints(group);
+
+        int end = trajectory[0].joint_trajectory.points.size() - 1;
+        r.setJointGroupPositions(jointGroup, trajectory[0].joint_trajectory.points[end].positions);
+
+        if(!RobotTrajectoryLine(group, poses[1], trajectory[1], r))
+        {
+            ROS_INFO_STREAM("get Trajectory failed" << 1);
+            return false;
+        }
     }
-    for(int i=0; i<cnt; i++)
+    else if(type == 1)
     {
-        ROS_INFO_STREAM(i);
-        for(int j=0; j<trajectory[i].joint_trajectory.points.size(); j++)
-            ROS_INFO_STREAM("joint0: " << trajectory[i].joint_trajectory.points[j].positions[0] << " "
-                            "joint1: " << trajectory[i].joint_trajectory.points[j].positions[1] << " "
-                            "joint2: " << trajectory[i].joint_trajectory.points[j].positions[2] << " "
-                            "joint3: " << trajectory[i].joint_trajectory.points[j].positions[3] << " "
-                            "joint4: " << trajectory[i].joint_trajectory.points[j].positions[4] << " "
-                            "joint5: " << trajectory[i].joint_trajectory.points[j].positions[5] );
+        if(!RobotTrajectoryLine(group, poses[0], trajectory[0], r))
+        {
+            ROS_INFO_STREAM("get Trajectory failed" << 0);
+            return false;
+        }
+        int end = trajectory[0].joint_trajectory.points.size() - 1;
+        r.setJointGroupPositions(jointGroup, trajectory[0].joint_trajectory.points[end].positions);
+        // 获取轨迹
+        setJointAllConstraints(group);
+        if(!RobotTrajectory(group, poses[1], trajectory[1], r))
+        {
+            ROS_INFO_STREAM("get Trajectory failed" << 1);
+            return false;
+        }
+        clearConstraints(group);
     }
+    else if(type == 2)
+    {
+        setJointAllConstraints(group);
+        for(int i=0; i<cnt; ++i)
+        {
+            if(!RobotTrajectory(group, poses[i], trajectory[i], r))
+            {
+                ROS_INFO_STREAM("get Trajectory failed" << i);
+                clearConstraints(group);
+                return false;
+            }
+
+            int end = trajectory[i].joint_trajectory.points.size() - 1;
+            r.setJointGroupPositions(jointGroup, trajectory[i].joint_trajectory.points[end].positions);    
+        }
+        clearConstraints(group);
+    }
+
+    // for(int i=0; i<cnt; i++)
+    // {
+    //     ROS_INFO_STREAM(i);
+    //     for(int j=0; j<trajectory[i].joint_trajectory.points.size(); j++)
+    //         ROS_INFO_STREAM("joint0: " << trajectory[i].joint_trajectory.points[j].positions[0] << " "
+    //                         "joint1: " << trajectory[i].joint_trajectory.points[j].positions[1] << " "
+    //                         "joint2: " << trajectory[i].joint_trajectory.points[j].positions[2] << " "
+    //                         "joint3: " << trajectory[i].joint_trajectory.points[j].positions[3] << " "
+    //                         "joint4: " << trajectory[i].joint_trajectory.points[j].positions[4] << " "
+    //                         "joint5: " << trajectory[i].joint_trajectory.points[j].positions[5] );
+    // }
+
     // 拼接轨迹
     moveit_msgs::RobotTrajectory targetTrajectory;
     targetTrajectory.joint_trajectory.joint_names = trajectory[0].joint_trajectory.joint_names;
@@ -1801,17 +1849,17 @@ bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterf
 
     rt.getRobotTrajectoryMsg(multi_plan.trajectory_);
     setStartState(group);
-    clearConstraints(group);
-    for(int i=0; i<multi_plan.trajectory_.joint_trajectory.points.size(); i++)
-    {
-        ROS_INFO_STREAM("joint0: " << trajectory[i].joint_trajectory.points[j].positions[0] << " "
-                        "joint1: " << trajectory[i].joint_trajectory.points[j].positions[1] << " "
-                        "joint2: " << trajectory[i].joint_trajectory.points[j].positions[2] << " "
-                        "joint3: " << trajectory[i].joint_trajectory.points[j].positions[3] << " "
-                        "joint4: " << trajectory[i].joint_trajectory.points[j].positions[4] << " "
-                        "joint5: " << trajectory[i].joint_trajectory.points[j].positions[5] );
-    }
-    
+
+    // for(int i=0; i<multi_plan.trajectory_.joint_trajectory.points.size(); i++)
+    // {
+    //     ROS_INFO_STREAM("joint0: " << multi_plan.trajectory_.joint_trajectory.points[i].positions[0] << " "
+    //                     "joint1: " << multi_plan.trajectory_.joint_trajectory.points[i].positions[1] << " "
+    //                     "joint2: " << multi_plan.trajectory_.joint_trajectory.points[i].positions[2] << " "
+    //                     "joint3: " << multi_plan.trajectory_.joint_trajectory.points[i].positions[3] << " "
+    //                     "joint4: " << multi_plan.trajectory_.joint_trajectory.points[i].positions[4] << " "
+    //                     "joint5: " << multi_plan.trajectory_.joint_trajectory.points[i].positions[5] );
+    // }
+    ROS_INFO_STREAM("type: " << type);
     if (!group.execute(multi_plan))
     {
         ROS_ERROR("Failed to execute plan");
@@ -1839,6 +1887,26 @@ bool RubikCubeSolve::RobotTrajectory(moveit::planning_interface::MoveGroupInterf
         // trajectory.push_back(my_plan.trajectory_);
     }
     else
+        return false;
+    return true;
+}
+
+bool RubikCubeSolve::RobotTrajectoryLine(moveit::planning_interface::MoveGroupInterface& group, \
+                geometry_msgs::PoseStamped& TargetPose, 
+                moveit_msgs::RobotTrajectory& trajectory, \
+                robot_state::RobotState& r)
+{
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    bool flag;
+    // 规划
+    group.setStartState(r);
+    group.setPoseTarget(TargetPose);
+    std::vector<geometry_msgs::Pose> pose;
+    pose.push_back(TargetPose.pose);
+    int cnt = 0;
+    while(group.computeCartesianPath(pose, 0.01, 0, trajectory) < 0.8 && ros::ok() && ++cnt < 10);
+
+    if(cnt == 10)
         return false;
     return true;
 }
