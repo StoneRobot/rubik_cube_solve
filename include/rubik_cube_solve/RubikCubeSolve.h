@@ -21,6 +21,10 @@
 #include "cubeParse/SolveCube.h"
 #include "rb_msgAndSrv/rb_DoubleBool.h"
 #include "rb_msgAndSrv/rb_ArrayAndBool.h"
+#include <moveit/robot_trajectory/robot_trajectory.h>
+#include <moveit/trajectory_processing/iterative_time_parameterization.h>
+#include <moveit_msgs/OrientationConstraint.h>
+
 /****/
 #include "hirop_msgs/moveToSiglePose.h"
 #include "hirop_msgs/moveToMultiPose.h"
@@ -161,7 +165,7 @@ public:
     void shoot(int num=0);
     void stopMove();
     void spinOnce();
-    void robotMoveCartesianUnit2(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z);
+    void robotMoveCartesian(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z);
     moveit::planning_interface::MoveGroupInterface& getMoveGroup(int num);
     void placeCube();
     bool recordPose(int robotNum, std::string name, bool isJointSpace);
@@ -172,6 +176,9 @@ public:
     int updataPointData();
     bool pickCube();
     bool setStartState(moveit::planning_interface::MoveGroupInterface& group);
+
+    bool setAndMoveMulti(moveit::planning_interface::MoveGroupInterface& group, std::vector<geometry_msgs::PoseStamped>& poses);
+    bool RobotTrajectory(moveit::planning_interface::MoveGroupInterface& group, geometry_msgs::PoseStamped& TargetPose, moveit_msgs::RobotTrajectory& trajectory);
 
 private:
     void getPrepareSomeDistanceRobotPose();

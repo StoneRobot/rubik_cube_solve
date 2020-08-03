@@ -309,7 +309,7 @@ bool RubikCubeSolve::goToPoseServer(rubik_cube_solve::recordPoseStamped::Request
 
         addData(pose, doc);
         ROS_INFO_STREAM(pose);
-        setAndMoveClient(getMoveGroup(req.robot), pose);
+        setAndMove(getMoveGroup(req.robot), pose);
     }
     return true;
 }
@@ -396,8 +396,8 @@ void RubikCubeSolve::stopMove()
 
 void RubikCubeSolve::goPreparePose()
 {
-    setAndMoveClient(move_group1, robotPose[1][0]);
-    setAndMoveClient(move_group0, robotPose[0][0]);
+    setAndMove(move_group1, robotPose[1][0]);
+    setAndMove(move_group0, robotPose[0][0]);
 
     bool fake;
     nh.getParam("/rubik_cube_solve/fakeInitializationState",fake);
@@ -409,7 +409,7 @@ void RubikCubeSolve::goPreparePose()
 
 void RubikCubeSolve::photographPickPlace(int robotNum, geometry_msgs::PoseStamped& pose, bool isPick, int pre_grasp_approach[], int post_grasp_retreat[])
 {
-    setAndMoveClient(getMoveGroup(robotNum), pose);
+    setAndMove(getMoveGroup(robotNum), pose);
     if(isPick)
     { 
         //Z AXIS
@@ -443,21 +443,21 @@ void RubikCubeSolve::photographstepDoublePhoto(int photoNum, int capturePose, in
 {
     if(!isStop)
     {
-        setAndMoveClient(getMoveGroup(Adata.captureRobot), robotPose[Adata.captureRobot][3]);
+        setAndMove(getMoveGroup(Adata.captureRobot), robotPose[Adata.captureRobot][3]);
         
-        setAndMoveClient(getMoveGroup(Adata.captureRobot), photographPose[capturePose]);
+        setAndMove(getMoveGroup(Adata.captureRobot), photographPose[capturePose]);
 
-        setAndMoveClient(getMoveGroup(Adata.otherRobot), photographPose[talkPose]);
+        setAndMove(getMoveGroup(Adata.otherRobot), photographPose[talkPose]);
 
         shoot(photoNum);
         setJoint6ValueClient(getMoveGroup(Adata.captureRobot), 180);
         shoot(++photoNum);
-        setAndMoveClient(getMoveGroup(Adata.otherRobot), robotPose[Adata.otherRobot][0]);
+        setAndMove(getMoveGroup(Adata.otherRobot), robotPose[Adata.otherRobot][0]);
 
-        setAndMoveClient(getMoveGroup(Adata.captureRobot), robotPose[Adata.captureRobot][3]);
+        setAndMove(getMoveGroup(Adata.captureRobot), robotPose[Adata.captureRobot][3]);
         geometry_msgs::PoseStamped pose = robotPose[Adata.captureRobot][Adata.capturePoint];
         pose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
-        setAndMoveClient(getMoveGroup(Adata.captureRobot), pose);
+        setAndMove(getMoveGroup(Adata.captureRobot), pose);
     }
 }
 
@@ -482,13 +482,13 @@ void RubikCubeSolve::photograph()
     pickCube();
     goPreparePose();
     // PosepickPose1.yaml
-    setAndMoveClient(move_group1, photographPose[1]);
+    setAndMove(move_group1, photographPose[1]);
     // PosepickPose2.yaml
-    setAndMoveClient(move_group0, photographPose[2]);
+    setAndMove(move_group0, photographPose[2]);
     shoot(0);
 
-    setAndMoveClient(move_group1, robotPose[1][0]);
-    setAndMoveClient(move_group0, robotPose[0][0]);
+    setAndMove(move_group1, robotPose[1][0]);
+    setAndMove(move_group0, robotPose[0][0]);
 
     // robot1 PosepickPose3.yaml; robot0 PosepickPose4.yaml
     photographstepDoublePhoto(1, 3, 4);
@@ -497,13 +497,13 @@ void RubikCubeSolve::photograph()
     swop(getMoveGroup(Adata.captureRobot), getMoveGroup(Adata.otherRobot), robotPose[Adata.captureRobot][Adata.capturePoint]);
 
     // robot0 PosepickPose5.yaml
-    setAndMoveClient(move_group0, photographPose[5]);
+    setAndMove(move_group0, photographPose[5]);
     // robot1 PosepickPose6.yaml
-    setAndMoveClient(move_group1, photographPose[6]);
+    setAndMove(move_group1, photographPose[6]);
     shoot(3);
 
-    setAndMoveClient(move_group1, robotPose[1][0]);
-    setAndMoveClient(move_group0, robotPose[0][0]);
+    setAndMove(move_group1, robotPose[1][0]);
+    setAndMove(move_group0, robotPose[0][0]);
     // robot0 PosepickPose3.yam7; robot1 PosepickPose8.yaml
     photographstepDoublePhoto(4, 7, 8);
 }
@@ -533,7 +533,7 @@ void RubikCubeSolve::placeCube()
     {
         placeCubePose = photographPose[0];
     }
-    setAndMoveClient(getMoveGroup(robotNum), placeCubePose);
+    setAndMove(getMoveGroup(robotNum), placeCubePose);
     robotMoveCartesianUnitClient(getMoveGroup(robotNum), 0, 0, -prepare_some_distance);
     openGripper(getMoveGroup(robotNum));
     robotMoveCartesianUnitClient(getMoveGroup(robotNum), 0, 0, prepare_some_distance);
@@ -559,8 +559,8 @@ bool RubikCubeSolve::InitializationStateAction()
 {
     geometry_msgs::PoseStamped pose = robotPose[Cstate.captureRobot][Cstate.capturePoint];
     pose.pose.position.y += pow(-1, Cstate.captureRobot)*prepare_some_distance;
-    setAndMoveClient(getMoveGroup(Cstate.captureRobot), pose);
-    setAndMoveClient(getMoveGroup(Adata.otherRobot), robotPose[Adata.otherRobot][0]);
+    setAndMove(getMoveGroup(Cstate.captureRobot), pose);
+    setAndMove(getMoveGroup(Adata.otherRobot), robotPose[Adata.otherRobot][0]);
 }
 
 // TODO
@@ -758,7 +758,7 @@ bool RubikCubeSolve::analyseCallBack(rubik_cube_solve::rubik_cube_solve_cmd::Req
             // 測試機器人1的精度
             ROS_INFO_STREAM("test 4");
             backHome(1);
-            setAndMoveClient(move_group1, photographPose[0]);
+            setAndMove(move_group1, photographPose[0]);
             openGripper(move_group1);
             robotMoveCartesianUnitClient(move_group1, 0, 0, -prepare_some_distance);
         }
@@ -1012,7 +1012,7 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     targetPose = pose;
     targetPose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
     wayPoint.push_back(targetPose);
-    setAndMoveMultiClient(capture_move_group, wayPoint);
+    setAndMoveMulti(capture_move_group, wayPoint);
 
     closeGripper(capture_move_group);
 
@@ -1027,7 +1027,7 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     targetPose2.pose.position.y +=  pow(-1, Adata.captureRobot)*prepare_some_distance;
     wayPoint2.push_back(targetPose2);
     wayPoint2.push_back(robotPose[Adata.otherRobot][0]);
-    setAndMoveMultiClient(rotate_move_group, wayPoint2);
+    setAndMoveMulti(rotate_move_group, wayPoint2);
 
     return true;
 }
@@ -1042,7 +1042,7 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
         std::vector<geometry_msgs::PoseStamped> wayPoints;
         wayPoints.push_back(robotPose[Adata.captureRobot][3]);
         wayPoints.push_back(robotPose[Adata.captureRobot][6]);
-        setAndMoveMultiClient(capture_move_group, wayPoints);
+        setAndMoveMulti(capture_move_group, wayPoints);
         // 
         rotateCube(rotate_move_group, robotPose[Adata.otherRobot][7], Adata.angle);
     }
@@ -1066,7 +1066,7 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
     }
     wayPoints2.push_back(targetPose);
     wayPoints2.push_back(robotPose[Adata.otherRobot][0]);
-    setAndMoveMultiClient(rotate_move_group, wayPoints2);
+    setAndMoveMulti(rotate_move_group, wayPoints2);
     // 抓住魔方的回原位
     pose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
 
@@ -1077,7 +1077,7 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
         wayPoints3.push_back(robotPose[Adata.captureRobot][3]);
     }
     wayPoints3.push_back(pose);
-    setAndMoveMultiClient(capture_move_group, wayPoints3);
+    setAndMoveMulti(capture_move_group, wayPoints3);
     return true;
 }
 
@@ -1086,17 +1086,17 @@ bool RubikCubeSolve::rotateCube(moveit::planning_interface::MoveGroupInterface& 
                                 geometry_msgs::PoseStamped pose, int angle)
 {
     openGripper(rotate_move_group);
-    setAndMoveClient(rotate_move_group, pose);
+    setAndMove(rotate_move_group, pose);
     if(Adata.space == UP)
     {
-        robotMoveCartesianUnitClient(rotate_move_group, 0, pow(-1, Adata.otherRobot)*prepare_some_distance*0.7071067, 0.7071067*prepare_some_distance);
+        robotMoveCartesian(rotate_move_group, 0, pow(-1, Adata.otherRobot)*prepare_some_distance*0.7071067, 0.7071067*prepare_some_distance);
     }
     else
     {
-        robotMoveCartesianUnitClient(rotate_move_group, 0, pow(-1, Adata.otherRobot)*prepare_some_distance*0.7071067, 0);
+        robotMoveCartesian(rotate_move_group, 0, pow(-1, Adata.otherRobot)*prepare_some_distance*0.7071067, 0);
     }
     closeGripper(rotate_move_group);
-    setJoint6ValueClient(rotate_move_group, angle);
+    setJoint6Value(rotate_move_group, angle);
     openGripper(rotate_move_group);
     return true;
 }
@@ -1105,39 +1105,37 @@ bool RubikCubeSolve::openGripper(moveit::planning_interface::MoveGroupInterface&
 {
     bool flag = true;
    hirop_msgs::openGripper srv;
-//    if(!isStop)
-//    {
-//         if(move_group.getName() == "arm0"){
-//             flag = openGripper_client0.call(srv);
-//             ROS_INFO("arm0 openGripper ");
-//         }
-//         else
-//         {
-//             ROS_INFO("arm1 openGripper ");
-//             flag = openGripper_client1.call(srv);
-//         }
-//         ros::Duration(1).sleep();
-//    }
+   if(!isStop)
+   {
+        if(move_group.getName() == "arm0"){
+            flag = openGripper_client0.call(srv);
+            ROS_INFO("arm0 openGripper ");
+        }
+        else
+        {
+            ROS_INFO("arm1 openGripper ");
+            flag = openGripper_client1.call(srv);
+        }
+   }
     return flag;
 }
 bool RubikCubeSolve::closeGripper(moveit::planning_interface::MoveGroupInterface& move_group)
 {
    bool flag = true;
    hirop_msgs::closeGripper srv;
-//    if(!isStop)
-//    {
-//         if(move_group.getName() == "arm0")
-//         {
-//             ROS_INFO("arm0 closeGripper ");
-//             flag = closeGripper_client0.call(srv);
-//         }
-//         else
-//         {
-//             ROS_INFO("arm1 closeGripper ");
-//             flag = closeGripper_client1.call(srv);
-//         }
-//         ros::Duration(1).sleep();
-//    }
+   if(!isStop)
+   {
+        if(move_group.getName() == "arm0")
+        {
+            ROS_INFO("arm0 closeGripper ");
+            flag = closeGripper_client0.call(srv);
+        }
+        else
+        {
+            ROS_INFO("arm1 closeGripper ");
+            flag = closeGripper_client1.call(srv);
+        }
+   }
     return flag;
 }
 
@@ -1367,7 +1365,7 @@ geometry_msgs::PoseStamped RubikCubeSolve::setEndEffectorPosoTarget(moveit::plan
     poseStamped.pose.orientation = tf2::toMsg(orientation);
     transformFrame(poseStamped);
     if(!only_get_pose)
-        setAndMoveClient(move_group, poseStamped);
+        setAndMove(move_group, poseStamped);
     return poseStamped;
 }
 
@@ -1496,7 +1494,7 @@ bool RubikCubeSolve::writePoseOnceFile(const std::string& name, const geometry_m
 }
 
 
-void RubikCubeSolve::robotMoveCartesianUnit2(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z)
+void RubikCubeSolve::robotMoveCartesian(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z)
 {
     // if(group.getName() == "arm1")
     ros::Duration(1).sleep();
@@ -1538,7 +1536,7 @@ void RubikCubeSolve::backHome(int robot)
 
 bool RubikCubeSolve::pickCube()
 {
-    setAndMoveClient(move_group1, photographPose[0]);
+    setAndMove(move_group1, photographPose[0]);
     openGripper(move_group1);
     robotMoveCartesianUnitClient(move_group1, 0, 0, -prepare_some_distance);
     closeGripper(move_group1);
@@ -1554,7 +1552,7 @@ int RubikCubeSolve::moveToPose()
     if(recordPointData.stepNum == 0)
     {
         overStepflag = 0;
-        setAndMoveClient(move_group1, photographPose[0]);
+        setAndMove(move_group1, photographPose[0]);
         openGripper(move_group1);
         InitializationState();
     }
@@ -1567,84 +1565,84 @@ int RubikCubeSolve::moveToPose()
                 // robot1
                 closeGripper(move_group1);
                 robotMoveCartesianUnitClient(move_group1, 0, 0, prepare_some_distance);
-                setAndMoveClient(move_group1, robotPose[1][0]);
+                setAndMove(move_group1, robotPose[1][0]);
                 break;
             case 2:
                 // robot0
-                setAndMoveClient(move_group0, robotPose[0][0]);
+                setAndMove(move_group0, robotPose[0][0]);
                 break;
             case 3:
                 // robot1
-                setAndMoveClient(move_group1, robotPose[1][3]);
+                setAndMove(move_group1, robotPose[1][3]);
                 robotMoveCartesianUnitClient(move_group1, 0, -prepare_some_distance, 0);
                 break;
             case 4:
-                setAndMoveClient(move_group0, robotPose[0][1]);
+                setAndMove(move_group0, robotPose[0][1]);
                 break;
             case 5:
                 robotMoveCartesianUnitClient(move_group0, 0, -prepare_some_distance, 0);
-                setAndMoveClient(move_group0, robotPose[0][0]);
-                setAndMoveClient(move_group0, robotPose[0][2]);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group0, robotPose[0][2]);
                 break;
             case 6:
                 robotMoveCartesianUnitClient(move_group0, 0, -prepare_some_distance, 0);
-                setAndMoveClient(move_group0, robotPose[0][0]);
-                setAndMoveClient(move_group0, robotPose[0][4]);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group0, robotPose[0][4]);
                 break;
             case 7:
                 robotMoveCartesianUnitClient(move_group0, 0, -prepare_some_distance, 0);
-                setAndMoveClient(move_group0, robotPose[0][0]);
-                setAndMoveClient(move_group0, robotPose[0][5]);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group0, robotPose[0][5]);
                 break;
             case 8:
                 robotMoveCartesianUnitClient(move_group0, 0, -prepare_some_distance, 0);
-                setAndMoveClient(move_group0, robotPose[0][0]);
-                setAndMoveClient(move_group1, robotPose[1][6]);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group1, robotPose[1][6]);
                 break;
             case 9:
-                setAndMoveClient(move_group0, robotPose[0][7]);
+                setAndMove(move_group0, robotPose[0][7]);
                 break;
             case 10:
                 robotMoveCartesianUnitClient(move_group0, 0, -prepare_some_distance*0.707, -prepare_some_distance*0.707);
-                setAndMoveClient(move_group0, robotPose[0][0]);
-                setAndMoveClient(move_group1, robotPose[1][3]);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group1, robotPose[1][3]);
                 robotMoveCartesianUnitClient(move_group1, 0, -prepare_some_distance, 0);
-                setAndMoveClient(move_group0, robotPose[0][3]);
+                setAndMove(move_group0, robotPose[0][3]);
                 break;
             case 11:
                 closeGripper(move_group0);
                 openGripper(move_group1);
                 robotMoveCartesianUnitClient(move_group1, 0, prepare_some_distance, 0);
-                setAndMoveClient(move_group1, robotPose[1][0]);
-                setAndMoveClient(move_group1, robotPose[1][1]);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group1, robotPose[1][1]);
                 break;
             case 12:
                 robotMoveCartesianUnitClient(move_group1, 0, prepare_some_distance, 0);
-                setAndMoveClient(move_group1, robotPose[1][0]);
-                setAndMoveClient(move_group1, robotPose[1][2]);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group1, robotPose[1][2]);
                 break;
             case 13:
                 robotMoveCartesianUnitClient(move_group1, 0, prepare_some_distance, 0);
-                setAndMoveClient(move_group1, robotPose[1][0]);
-                setAndMoveClient(move_group1, robotPose[1][4]);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group1, robotPose[1][4]);
                 break;
             case 14:
                 robotMoveCartesianUnitClient(move_group1, 0, prepare_some_distance, 0);
-                setAndMoveClient(move_group1, robotPose[1][0]);
-                setAndMoveClient(move_group1, robotPose[1][5]);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group1, robotPose[1][5]);
                 break;
             case 15:
                 robotMoveCartesianUnitClient(move_group1, 0, prepare_some_distance, 0);
-                setAndMoveClient(move_group1, robotPose[1][0]);
-                setAndMoveClient(move_group0, robotPose[0][6]);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group0, robotPose[0][6]);
                 break;
             case 16:
-                setAndMoveClient(move_group1, robotPose[1][7]);
+                setAndMove(move_group1, robotPose[1][7]);
                 break;
             case 17:
                 robotMoveCartesianUnitClient(move_group1, 0, prepare_some_distance*0.707, -prepare_some_distance*0.707);
-                setAndMoveClient(move_group1, robotPose[1][0]);
-                setAndMoveClient(move_group0, photographPose[9]);
+                setAndMove(move_group1, robotPose[1][0]);
+                setAndMove(move_group0, photographPose[9]);
                 break;
         }
     }
@@ -1655,25 +1653,25 @@ int RubikCubeSolve::moveToPose()
             case 1:
                 closeGripper(move_group1);
                 robotMoveCartesianUnitClient(move_group1, 0, 0, prepare_some_distance);
-                setAndMoveClient(move_group1, photographPose[1]);
-                setAndMoveClient(move_group0, photographPose[2]);
+                setAndMove(move_group1, photographPose[1]);
+                setAndMove(move_group0, photographPose[2]);
                 break;
             case 2:
-                setAndMoveClient(move_group1, photographPose[3]);
-                setAndMoveClient(move_group0, photographPose[4]);
+                setAndMove(move_group1, photographPose[3]);
+                setAndMove(move_group0, photographPose[4]);
                 break;
             case 3:
-                setAndMoveClient(move_group0, robotPose[0][0]);
-                setAndMoveClient(move_group1, robotPose[1][3]);
+                setAndMove(move_group0, robotPose[0][0]);
+                setAndMove(move_group1, robotPose[1][3]);
                 robotMoveCartesianUnitClient(move_group1, 0, -prepare_some_distance, 0);
                 analyseData(3, 0);
                 swop(getMoveGroup(Adata.captureRobot), getMoveGroup(Adata.otherRobot), robotPose[Adata.captureRobot][Adata.capturePoint]);
-                setAndMoveClient(move_group0, photographPose[5]);
-                setAndMoveClient(move_group1, photographPose[6]);
+                setAndMove(move_group0, photographPose[5]);
+                setAndMove(move_group1, photographPose[6]);
                 break;
             case 4:
-                setAndMoveClient(move_group0, photographPose[7]);
-                setAndMoveClient(move_group1, photographPose[8]);
+                setAndMove(move_group0, photographPose[7]);
+                setAndMove(move_group1, photographPose[8]);
                 break;
         }
     }    
@@ -1752,4 +1750,77 @@ int RubikCubeSolve::updataPointData()
         recordPose(otherRobot, recordPointData.shootPhotoPoseName[recordPointData.stepNum*2-1], false);
     }
     return 0;
+}
+
+
+bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterface& group, std::vector<geometry_msgs::PoseStamped>& poses)
+{
+    setStartState(group);
+    bool flag;
+    std::vector<moveit_msgs::RobotTrajectory> trajectory;
+    int cnt=poses.size();
+    trajectory.resize(cnt);
+
+    // 获取轨迹
+    for(int i=0; i<cnt; i++)
+    {
+
+        if(!RobotTrajectory(group, poses[i], trajectory[i]))
+        {
+            ROS_INFO_STREAM("get Trajectory failed" << i);
+            return false;
+        }
+
+        ROS_INFO_STREAM("get Trajectory" << i);
+    }
+    // 拼接轨迹
+    moveit_msgs::RobotTrajectory targetTrajectory;
+    targetTrajectory.joint_trajectory.joint_names = trajectory[0].joint_trajectory.joint_names;
+    targetTrajectory.joint_trajectory.points = trajectory[0].joint_trajectory.points;
+    for(int j=1; j<cnt; j++)
+    {
+        for(int k=0; k<trajectory[j].joint_trajectory.points.size(); ++k)
+        {
+            targetTrajectory.joint_trajectory.points.push_back(trajectory[j].joint_trajectory.points[k]);
+        }
+    }
+    // 
+    moveit::planning_interface::MoveGroupInterface::Plan multi_plan;
+    robot_trajectory::RobotTrajectory rt(group.getCurrentState()->getRobotModel(), group.getName());
+
+    rt.setRobotTrajectoryMsg(*(group.getCurrentState()), targetTrajectory);
+    trajectory_processing::IterativeParabolicTimeParameterization iptp;
+    iptp.computeTimeStamps(rt, 1, 1);
+
+    rt.getRobotTrajectoryMsg(multi_plan.trajectory_);
+    setStartState(group);
+    if (!group.execute(multi_plan))
+    {
+        ROS_ERROR("Failed to execute plan");
+        return false;
+    }
+    return true;
+}
+
+bool RubikCubeSolve::RobotTrajectory(moveit::planning_interface::MoveGroupInterface& group, geometry_msgs::PoseStamped& TargetPose, moveit_msgs::RobotTrajectory& trajectory)
+{
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    bool flag;
+    // 规划
+    group.setPoseTarget(TargetPose);
+    flag = group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS;
+    if(flag)
+    {
+        trajectory.joint_trajectory.joint_names = my_plan.trajectory_.joint_trajectory.joint_names;
+        trajectory.joint_trajectory.points = my_plan.trajectory_.joint_trajectory.points;
+        // trajectory.push_back(my_plan.trajectory_);
+    }
+    else
+        return false;
+    // 设置起点
+    moveit_msgs::RobotState r;
+    int end = my_plan.trajectory_.joint_trajectory.points.size() - 1;
+    r.joint_state.position = my_plan.trajectory_.joint_trajectory.points[end].positions;
+    group.setStartState(r);
+    return true;
 }
