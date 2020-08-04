@@ -31,6 +31,7 @@
 #include "hirop_msgs/moveLine.h"
 #include "hirop_msgs/moveSigleAixs.h"
 #include "hirop_msgs/motionBridgeStart.h"
+#include "hirop_msgs/dualRbtraject.h"
 /****/
 
 #include <vector>
@@ -177,7 +178,9 @@ public:
     bool pickCube();
     bool setStartState(moveit::planning_interface::MoveGroupInterface& group);
 
-    bool setAndMoveMulti(moveit::planning_interface::MoveGroupInterface& group, std::vector<geometry_msgs::PoseStamped>& poses, int type);
+    bool setAndMoveMulti(moveit::planning_interface::MoveGroupInterface& group, \
+                        std::vector<geometry_msgs::PoseStamped>& poses, int type,\
+                        trajectory_msgs::JointTrajectory& tra);
     bool RobotTrajectory(moveit::planning_interface::MoveGroupInterface& group, \
                         geometry_msgs::PoseStamped& TargetPose, \
                         moveit_msgs::RobotTrajectory& trajectory,\
@@ -186,6 +189,7 @@ public:
                 geometry_msgs::PoseStamped& TargetPose, 
                 moveit_msgs::RobotTrajectory& trajectory, \
                 robot_state::RobotState& r);
+    bool seedTrajectory(trajectory_msgs::JointTrajectory& trajectory0, trajectory_msgs::JointTrajectory& trajectory1);
 
 private:
     void getPrepareSomeDistanceRobotPose();
@@ -234,6 +238,8 @@ private:
     ros::ServiceClient closeGripper_client0;
     ros::ServiceClient openGripper_client1;
     ros::ServiceClient closeGripper_client1;
+
+    ros::ServiceClient dualRobottrajectory;
 
     /***** motion ***/
     ros::ServiceClient l_motionStart_client;

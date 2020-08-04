@@ -210,17 +210,22 @@ int main(int argc, char *argv[])
     ros::NodeHandle nh;
     ros::AsyncSpinner spinner(2);
     spinner.start();
+    
     moveit::planning_interface::MoveGroupInterface move_group0("arm0");
     moveit::planning_interface::MoveGroupInterface move_group1("arm1");
-    std::string posesFilePath;
-    nh.getParam("/poses_file_path", posesFilePath);
-    getPoseStamped(move_group0, move_group1);
-    long cnt = 0;
-    std::cin.ignore();
-    writePoseFile(posesFilePath);
-    while (ros::ok())
-    {
-        example(move_group0, move_group1);
-    }
+    move_group0.setNamedTarget("home0");
+    move_group1.setNamedTarget("home1");
+    move_group0.asyncMove();
+    move_group1.asyncMove();
+    // std::string posesFilePath;
+    // nh.getParam("/poses_file_path", posesFilePath);
+    // getPoseStamped(move_group0, move_group1);
+    // long cnt = 0;
+    // std::cin.ignore();
+    // writePoseFile(posesFilePath);
+    // while (ros::ok())
+    // {
+    //     example(move_group0, move_group1);
+    // }
     return 0;
 }
