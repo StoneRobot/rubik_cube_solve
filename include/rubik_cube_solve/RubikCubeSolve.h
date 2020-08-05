@@ -242,22 +242,17 @@ private:
     ros::ServiceClient dualRobottrajectory;
 
     /***** motion ***/
-    ros::ServiceClient l_motionStart_client;
-    ros::ServiceClient r_motionStart_client;
+    ros::ServiceClient motionStart_client;
 
-    ros::ServiceClient l_moveToSiglePose_client;
-    ros::ServiceClient r_moveToSiglePose_client;
+    ros::ServiceClient moveToSiglePose_client;
 
-    ros::ServiceClient l_moveToMultiPose_client;
-    ros::ServiceClient r_moveToMultiPose_client;
+    ros::ServiceClient moveToMultiPose_client;
 
-    ros::ServiceClient l_moveLine_client;
-    ros::ServiceClient r_moveLine_client;
+    ros::ServiceClient moveLine_client;
 
-    ros::ServiceClient l_SigleAixs_client;
-    ros::ServiceClient r_SigleAixs_client;
+    ros::ServiceClient SigleAixs_client;
     void initMotionClient();
-    void start(int robotNum);
+    void start();
 
 
 

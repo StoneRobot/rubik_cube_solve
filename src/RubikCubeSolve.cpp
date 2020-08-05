@@ -1,5 +1,6 @@
 #include <rubik_cube_solve/RubikCubeSolve.h>
 #include <math.h> 
+#include <ros/package.h>
 RubikCubeSolve::RubikCubeSolve(ros::NodeHandle nodehandle, \
                                 moveit::planning_interface::MoveGroupInterface& group0, \
                                 moveit::planning_interface::MoveGroupInterface& group1)
@@ -31,7 +32,7 @@ move_group1{group1}
     closeGripper_client1 = nh.serviceClient<hirop_msgs::closeGripper>("/UR52/closeGripper");
     shootClient = nh.serviceClient<cubeParse::TakePhoto>("get_cube");
     receiveSolve = nh.serviceClient<cubeParse::SolveCube>("solve_cube");
-    dualRobottrajectory = nh.serviceClient<hirop_msgs::dualRbtraject>("dualRbtraject");
+    
 
     initMotionClient();
     
@@ -61,41 +62,30 @@ move_group1{group1}
 /****/
 void RubikCubeSolve::initMotionClient()
 {
-    l_motionStart_client = nh.serviceClient<hirop_msgs::motionBridgeStart>("/hsr_left/motionBridgeStart");
-    r_motionStart_client = nh.serviceClient<hirop_msgs::motionBridgeStart>("/hsr_right/motionBridgeStart");
+    dualRobottrajectory = nh.serviceClient<hirop_msgs::dualRbtraject>("/motion_bridge/dualRobMotion_JointTraject");
 
-    l_moveToSiglePose_client = nh.serviceClient<hirop_msgs::moveToSiglePose>("/hsr_left/moveToSiglePose");
-    r_moveToSiglePose_client = nh.serviceClient<hirop_msgs::moveToSiglePose>("/hsr_right/moveToSiglePose");
+    motionStart_client = nh.serviceClient<hirop_msgs::motionBridgeStart>("/motion_bridge/motionBridgeStart");
 
-    l_moveToMultiPose_client = nh.serviceClient<hirop_msgs::moveToMultiPose>("/hsr_left/moveToMultiPose");
-    r_moveToMultiPose_client = nh.serviceClient<hirop_msgs::moveToMultiPose>("/hsr_right/moveToMultiPose");
+    moveToSiglePose_client = nh.serviceClient<hirop_msgs::moveToSiglePose>("/motion_bridge/moveToSiglePose");
 
-    l_moveLine_client = nh.serviceClient<hirop_msgs::moveLine>("/hsr_left/moveLine");
-    r_moveLine_client = nh.serviceClient<hirop_msgs::moveLine>("/hsr_right/moveLine");
+    moveToMultiPose_client = nh.serviceClient<hirop_msgs::moveToMultiPose>("/motion_bridge/moveToMultiPose");
 
-    l_SigleAixs_client = nh.serviceClient<hirop_msgs::moveSigleAixs>("/hsr_left/SigleAixs");
-    r_SigleAixs_client = nh.serviceClient<hirop_msgs::moveSigleAixs>("/hsr_right/SigleAixs");
+    moveLine_client = nh.serviceClient<hirop_msgs::moveLine>("/motion_bridge/moveLine");
 
-    start(0);
-    start(1);
+    SigleAixs_client = nh.serviceClient<hirop_msgs::moveSigleAixs>("/motion_bridge/SigleAixs");
+
+    start();
 }
 
-void RubikCubeSolve::start(int robotNum)
+void RubikCubeSolve::start()
 {
     hirop_msgs::motionBridgeStart srv;
-    if(robotNum == 0)
-    {
-        srv.request.endLink_name = move_group0.getEndEffectorLink();
-        srv.request.moveGroup_name = move_group0.getName();
-        l_motionStart_client.call(srv);
-
-    }
-    else
-    {
-        srv.request.endLink_name = move_group1.getEndEffectorLink();
-        srv.request.moveGroup_name = move_group1.getName();
-        r_motionStart_client.call(srv);
-    }
+    srv.request.robot_num = 2;
+    srv.request.robotMotionGroup_list.resize(srv.request.robot_num);
+    srv.request.robotMotionGroup_list[0].moveGroup_name = move_group0.getName();
+    srv.request.robotMotionGroup_list[0].moveGroup_name = move_group0.getEndEffectorLink();
+    srv.request.robotMotionGroup_list[1].moveGroup_name = move_group1.getName();
+    srv.request.robotMotionGroup_list[1].moveGroup_name = move_group1.getEndEffectorLink();
 }
 
 std::vector<double> RubikCubeSolve::getRobotState(moveit::planning_interface::MoveGroupInterface& move_group, geometry_msgs::PoseStamped& poseStamped)
@@ -133,22 +123,14 @@ bool RubikCubeSolve::setAndMoveClient(moveit::planning_interface::MoveGroupInter
         return false;
     hirop_msgs::moveToSiglePose srv;
     srv.request.pose_joints_angle.joints_angle.data = joints;
-    if(move_group.getName() == "arm0")
+    srv.request.moveGroup_name = move_group.getName();
+
+    if(moveToSiglePose_client.call(srv))
     {
-        if(l_moveToSiglePose_client.call(srv))
-        {
-            ROS_INFO(srv.response.info.c_str());
-            return srv.response.is_success;
-        }
+        ROS_INFO(srv.response.info.c_str());
+        return srv.response.is_success;
     }
-    else
-    {
-        if(r_moveToSiglePose_client.call(srv))
-        {
-            ROS_INFO(srv.response.info.c_str());
-            return srv.response.is_success;
-        }
-    }
+
     return false;
 }
 
@@ -157,6 +139,7 @@ bool RubikCubeSolve::setAndMoveMultiClient(moveit::planning_interface::MoveGroup
 {
     hirop_msgs::moveToMultiPose srv;
     srv.request.poseList_joints_angle.resize(poseStamped.size());
+    srv.request.moveGroup_name = move_group.getName();
     for(int i=0; i < poseStamped.size(); i++)
     {
         std::vector<double> joint;
@@ -165,22 +148,13 @@ bool RubikCubeSolve::setAndMoveMultiClient(moveit::planning_interface::MoveGroup
             return false;
         srv.request.poseList_joints_angle[i].joints_angle.data = joint;
     }
-    if(move_group.getName() == "arm0")
+
+    if(moveToMultiPose_client.call(srv))
     {
-        if(l_moveToMultiPose_client.call(srv))
-        {
-            ROS_INFO(srv.response.info.c_str());
-            return srv.response.is_success;
-        }
+        ROS_INFO(srv.response.info.c_str());
+        return srv.response.is_success;
     }
-    else
-    {
-        if(r_moveToMultiPose_client.call(srv))
-        {
-            ROS_INFO(srv.response.info.c_str());
-            return srv.response.is_success;
-        }
-    }
+
     return false;
 }
 
@@ -190,22 +164,13 @@ bool RubikCubeSolve::robotMoveCartesianUnitClient(moveit::planning_interface::Mo
     srv.request.Cartesian_x = x;
     srv.request.Cartesian_y = y;
     srv.request.Cartesian_z = z;
-    if(group.getName() == "arm0")
+    srv.request.moveGroup_name = group.getName();
+    if(moveLine_client.call(srv))
     {
-        if(l_moveLine_client.call(srv))
-        {
-            ROS_INFO(srv.response.info.c_str());
-            return srv.response.is_success;
-        }
+        ROS_INFO(srv.response.info.c_str());
+        return srv.response.is_success;
     }
-    else
-    {
-        if(r_moveLine_client.call(srv))
-        {
-            ROS_INFO(srv.response.info.c_str());
-            return srv.response.is_success;
-        }
-    }
+
     return false;
 }
 
@@ -232,24 +197,14 @@ bool RubikCubeSolve::setJoint6ValueClient(moveit::planning_interface::MoveGroupI
     // joint[5] *= 180;
     srv.request.angle = joint[5];
     srv.request.index_axis = 5;
-    if(rotate_move_group.getName() == "arm0")
+    srv.request.moveGroup_name = rotate_move_group.getName();
+
+    if(SigleAixs_client.call(srv))
     {
-        if(l_SigleAixs_client.call(srv))
-        {
-            ROS_INFO(srv.response.info.c_str());
-            return srv.response.is_success;
-        }
+        ROS_INFO(srv.response.info.c_str());
+        return srv.response.is_success;
     }
-    else
-    {
-        if(r_SigleAixs_client.call(srv))
-        {
-            ROS_INFO(srv.response.info.c_str());
-            return srv.response.is_success;
-        }
-    }
-    setStartState(rotate_move_group);
-    std::vector<double> j = rotate_move_group.getCurrentJointValues();
+
     return false;
 }
 
@@ -1946,8 +1901,11 @@ bool RubikCubeSolve::RobotTrajectoryLine(moveit::planning_interface::MoveGroupIn
 bool RubikCubeSolve::seedTrajectory(trajectory_msgs::JointTrajectory& robot0Trajectory, trajectory_msgs::JointTrajectory& robot1Trajectory)
 {
     hirop_msgs::dualRbtraject srv;
-    srv.request.robot0_jointTra = robot0Trajectory;
-    srv.request.robot1_jointTra = robot1Trajectory;
+    srv.request.robotMotionTraject_list.resize(2);
+    srv.request.robotMotionTraject_list[0].moveGroup_name = move_group0.getName();
+    srv.request.robotMotionTraject_list[0].robot_jointTra = robot0Trajectory;
+    srv.request.robotMotionTraject_list[1].moveGroup_name = move_group1.getName();
+    srv.request.robotMotionTraject_list[1].robot_jointTra = robot1Trajectory;
     if(dualRobottrajectory.call(srv))
     {
         return srv.response.is_success;
