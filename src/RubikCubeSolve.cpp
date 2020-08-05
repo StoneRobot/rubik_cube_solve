@@ -972,7 +972,7 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     targetPose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
     wayPoint.push_back(targetPose);
     // 获取轨迹
-    setAndMoveMulti(capture_move_group, wayPoint, 0, tra[Adata.captureRobot]);
+    setAndMoveMulti(capture_move_group, wayPoint, 0, tra[Adata.captureRobot], false);
 
     closeGripper(capture_move_group);
 
@@ -988,9 +988,9 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     wayPoint2.push_back(targetPose2);
     wayPoint2.push_back(robotPose[Adata.otherRobot][0]);
     // 获取轨迹
-    setAndMoveMulti(rotate_move_group, wayPoint2, 1, tra[Adata.otherRobot]);
+    setAndMoveMulti(rotate_move_group, wayPoint2, 1, tra[Adata.otherRobot], false);
     // 发送
-    seedTrajectory(tra[0], tra[1]);
+    // seedTrajectory(tra[0], tra[1]);
     return true;
 }
 
@@ -1007,13 +1007,15 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
         wayPoints.push_back(robotPose[Adata.captureRobot][3]);
         wayPoints.push_back(robotPose[Adata.captureRobot][6]);
         // 获取发送
-        setAndMoveMulti(capture_move_group, wayPoints, 2, tra[Adata.captureRobot]);
-        seedTrajectory(tra[0], tra[1]);
+        setAndMoveMulti(capture_move_group, wayPoints, 2, tra[Adata.captureRobot], false);
+        // seedTrajectory(tra[0], tra[1]);
         // 
+        // setAndMove(rotate_move_group, robotPose[Adata.otherRobot][7]);
         rotateCube(rotate_move_group, robotPose[Adata.otherRobot][7], Adata.angle);
     }
     else
     {
+        // setAndMove(rotate_move_group, robotPose[Adata.otherRobot][5]);
         rotateCube(rotate_move_group, robotPose[Adata.otherRobot][5], Adata.angle);
     }
     // 拧魔方的回原位
@@ -1035,7 +1037,7 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
     }
     wayPoints2.push_back(targetPose);
     wayPoints2.push_back(robotPose[Adata.otherRobot][0]);
-    setAndMoveMulti(rotate_move_group, wayPoints2, 1, tra2[Adata.otherRobot]);
+    setAndMoveMulti(rotate_move_group, wayPoints2, 1, tra2[Adata.otherRobot], true);
     // 抓住魔方的回原位
     pose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
 
@@ -1045,7 +1047,7 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
         wayPoints3.push_back(robotPose[Adata.captureRobot][3]);
     }
     wayPoints3.push_back(pose);
-    setAndMoveMulti(capture_move_group, wayPoints3, 2, tra2[Adata.captureRobot]);
+    setAndMoveMulti(capture_move_group, wayPoints3, 2, tra2[Adata.captureRobot], true);
     seedTrajectory(tra2[0], tra2[1]);
     return true;
 }
@@ -1713,7 +1715,8 @@ int RubikCubeSolve::updataPointData()
 
 bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterface& group, \
                             std::vector<geometry_msgs::PoseStamped>& poses, int type,
-                            trajectory_msgs::JointTrajectory& tra)
+                            trajectory_msgs::JointTrajectory& tra, 
+                            bool only_plan=true)
 {
     setStartState(group);
     ROS_INFO_STREAM("type: " << type);
@@ -1842,17 +1845,20 @@ bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterf
     
 
     // trajectory_msgs::JointTrajectory tra;
-    tra.points = multi_plan.trajectory_.joint_trajectory.points;
-    // return true;
+    if(only_plan)
+        tra = multi_plan.trajectory_.joint_trajectory;
+    else
+    {
+        // 执行
+        setStartState(group);
+        if (!group.execute(multi_plan))
+        {
+            ROS_ERROR("Failed to execute plan");
+            return false;
+        }
+        ROS_ERROR("SUCCEED to execute plan");
 
-    // 执行
-    // setStartState(group);
-    // if (!group.execute(multi_plan))
-    // {
-    //     ROS_ERROR("Failed to execute plan");
-    //     return false;
-    // }
-    // ROS_ERROR("SUCCEED to execute plan");
+    }
     return true;
 }
 
@@ -1900,18 +1906,30 @@ bool RubikCubeSolve::RobotTrajectoryLine(moveit::planning_interface::MoveGroupIn
 
 bool RubikCubeSolve::seedTrajectory(trajectory_msgs::JointTrajectory& robot0Trajectory, trajectory_msgs::JointTrajectory& robot1Trajectory)
 {
-    hirop_msgs::dualRbtraject srv;
-    srv.request.robotMotionTraject_list.resize(2);
-    srv.request.robotMotionTraject_list[0].moveGroup_name = move_group0.getName();
-    srv.request.robotMotionTraject_list[0].robot_jointTra = robot0Trajectory;
-    srv.request.robotMotionTraject_list[1].moveGroup_name = move_group1.getName();
-    srv.request.robotMotionTraject_list[1].robot_jointTra = robot1Trajectory;
-    if(dualRobottrajectory.call(srv))
-    {
-        return srv.response.is_success;
-    }
-    else
-    {
-        return false;
-    }
+    // hirop_msgs::dualRbtraject srv;
+    // srv.request.robotMotionTraject_list.resize(2);
+    // srv.request.robotMotionTraject_list[0].moveGroup_name = move_group0.getName();
+    // srv.request.robotMotionTraject_list[0].robot_jointTra = robot0Trajectory;
+    // srv.request.robotMotionTraject_list[1].moveGroup_name = move_group1.getName();
+    // srv.request.robotMotionTraject_list[1].robot_jointTra = robot1Trajectory;
+    // if(dualRobottrajectory.call(srv))
+    // {
+    //     return srv.response.is_success;
+    // }
+    // else
+    // {
+    //     return false;
+    // }
+    ROS_INFO("---->>>>----");
+    moveit_msgs::RobotTrajectory j0;
+    moveit_msgs::RobotTrajectory j1;
+    j0.joint_trajectory = robot0Trajectory;
+    j1.joint_trajectory = robot1Trajectory;
+    moveit::planning_interface::MoveGroupInterface::Plan plan0;
+    moveit::planning_interface::MoveGroupInterface::Plan plan1;
+    plan0.trajectory_ = j0;
+    plan1.trajectory_ = j1;
+    move_group0.execute(plan0);
+    move_group1.execute(plan1);
+    return true;
 }

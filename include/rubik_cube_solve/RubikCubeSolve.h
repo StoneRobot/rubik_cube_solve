@@ -180,7 +180,8 @@ public:
 
     bool setAndMoveMulti(moveit::planning_interface::MoveGroupInterface& group, \
                         std::vector<geometry_msgs::PoseStamped>& poses, int type,\
-                        trajectory_msgs::JointTrajectory& tra);
+                        trajectory_msgs::JointTrajectory& tra, 
+                        bool only_plan);
     bool RobotTrajectory(moveit::planning_interface::MoveGroupInterface& group, \
                         geometry_msgs::PoseStamped& TargetPose, \
                         moveit_msgs::RobotTrajectory& trajectory,\
