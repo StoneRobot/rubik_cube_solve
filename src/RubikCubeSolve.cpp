@@ -1001,23 +1001,24 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
 {
     std::vector<trajectory_msgs::JointTrajectory> tra;
     tra.resize(2);
+    std::vector<geometry_msgs::PoseStamped> wayPoints;
+    std::vector<geometry_msgs::PoseStamped> wayPoints4;
     if(Adata.space == UP)
     {
-        std::vector<geometry_msgs::PoseStamped> wayPoints;
         wayPoints.push_back(robotPose[Adata.captureRobot][3]);
         wayPoints.push_back(robotPose[Adata.captureRobot][6]);
         // 获取发送
-        setAndMoveMulti(capture_move_group, wayPoints, 2, tra[Adata.captureRobot], false);
-        // seedTrajectory(tra[0], tra[1]);
-        // 
-        // setAndMove(rotate_move_group, robotPose[Adata.otherRobot][7]);
-        rotateCube(rotate_move_group, robotPose[Adata.otherRobot][7], Adata.angle);
+        setAndMoveMulti(capture_move_group, wayPoints, 2, tra[Adata.captureRobot], true);
+        wayPoints4.push_back(robotPose[Adata.otherRobot][7]);
     }
     else
     {
-        // setAndMove(rotate_move_group, robotPose[Adata.otherRobot][5]);
-        rotateCube(rotate_move_group, robotPose[Adata.otherRobot][5], Adata.angle);
+        wayPoints4.push_back(robotPose[Adata.otherRobot][5]);
     }
+    setAndMoveMulti(rotate_move_group, wayPoints4, 2, tra[Adata.otherRobot], true);
+    seedTrajectory(tra[0], tra[1]);
+    // 去 轉動
+    rotateCube(rotate_move_group, Adata.angle);
     // 拧魔方的回原位
     std::vector<trajectory_msgs::JointTrajectory> tra2;
     tra2.resize(2);
@@ -1028,14 +1029,17 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
     targetPose = rotate_move_group.getCurrentPose();
     if(Adata.space == UP)
     {
-        targetPose.pose.position.y -= pow(-1, Adata.otherRobot)*prepare_some_distance*0.7071067;
-        targetPose.pose.position.z -= 0.7071067*prepare_some_distance;
+        // targetPose.pose.position.y -= pow(-1, Adata.otherRobot)*prepare_some_distance*0.7071067;
+        // targetPose.pose.position.z -= 0.7071067*prepare_some_distance;
+        robotMoveCartesian(rotate_move_group, 0, -pow(-1, Adata.otherRobot)*prepare_some_distance*0.7071067, -0.7071067*prepare_some_distance);
     }
     else
     {
-        targetPose.pose.position.y -= pow(-1, Adata.otherRobot)*prepare_some_distance;
+        robotMoveCartesian(rotate_move_group, 0, -pow(-1, Adata.otherRobot)*prepare_some_distance, 0);
+        // targetPose.pose.position.y -= pow(-1, Adata.otherRobot)*prepare_some_distance;
     }
-    wayPoints2.push_back(targetPose);
+
+    // wayPoints2.push_back(targetPose);
     wayPoints2.push_back(robotPose[Adata.otherRobot][0]);
     setAndMoveMulti(rotate_move_group, wayPoints2, 1, tra2[Adata.otherRobot], true);
     // 抓住魔方的回原位
@@ -1053,11 +1057,9 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
 }
 
 //TODO rotateCube
-bool RubikCubeSolve::rotateCube(moveit::planning_interface::MoveGroupInterface& rotate_move_group, 
-                                geometry_msgs::PoseStamped pose, int angle)
+bool RubikCubeSolve::rotateCube(moveit::planning_interface::MoveGroupInterface& rotate_move_group, int angle)
 {
     openGripper(rotate_move_group);
-    setAndMove(rotate_move_group, pose);
     if(Adata.space == UP)
     {
         robotMoveCartesian(rotate_move_group, 0, pow(-1, Adata.otherRobot)*prepare_some_distance*0.7071067, 0.7071067*prepare_some_distance);
@@ -1813,6 +1815,7 @@ bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterf
     {
         for(int k=1; k<trajectory[j].joint_trajectory.points.size(); ++k)
         {
+            targetTrajectory.joint_trajectory.joint_names.push_back(trajectory[j].joint_trajectory.joint_names[k]);
             targetTrajectory.joint_trajectory.points.push_back(trajectory[j].joint_trajectory.points[k]);
         }
     }

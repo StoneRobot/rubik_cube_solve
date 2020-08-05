@@ -113,9 +113,7 @@ public:
     bool swop(moveit::planning_interface::MoveGroupInterface& capture_move_group,\
                         moveit::planning_interface::MoveGroupInterface& rotate_move_group,\
                         geometry_msgs::PoseStamped pose);
-    bool rotateCube(moveit::planning_interface::MoveGroupInterface& rotate_move_group, 
-                    geometry_msgs::PoseStamped pose,
-                    int angle);
+    bool rotateCube(moveit::planning_interface::MoveGroupInterface& rotate_move_group, int angle);
     moveit::planning_interface::MoveItErrorCode setAndMove(moveit::planning_interface::MoveGroupInterface& move_group, \
                                                                         geometry_msgs::PoseStamped& );
     // 将面和角度映射到几号机器人抓住什么点位,并拧转多少度
