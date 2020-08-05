@@ -989,8 +989,6 @@ bool RubikCubeSolve::swop(moveit::planning_interface::MoveGroupInterface& captur
     wayPoint2.push_back(robotPose[Adata.otherRobot][0]);
     // 获取轨迹
     setAndMoveMulti(rotate_move_group, wayPoint2, 1, tra[Adata.otherRobot], false);
-    // 发送
-    // seedTrajectory(tra[0], tra[1]);
     return true;
 }
 
@@ -1041,7 +1039,7 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
 
     // wayPoints2.push_back(targetPose);
     wayPoints2.push_back(robotPose[Adata.otherRobot][0]);
-    setAndMoveMulti(rotate_move_group, wayPoints2, 1, tra2[Adata.otherRobot], true);
+    setAndMoveMulti(rotate_move_group, wayPoints2, 2, tra2[Adata.otherRobot], true);
     // 抓住魔方的回原位
     pose.pose.position.y += pow(-1, Adata.captureRobot)*prepare_some_distance;
 
@@ -1049,9 +1047,9 @@ bool RubikCubeSolve::step(moveit::planning_interface::MoveGroupInterface& captur
     if(Adata.space == UP)
     {
         wayPoints3.push_back(robotPose[Adata.captureRobot][3]);
+        wayPoints3.push_back(pose);
+        setAndMoveMulti(capture_move_group, wayPoints3, 2, tra2[Adata.captureRobot], true);
     }
-    wayPoints3.push_back(pose);
-    setAndMoveMulti(capture_move_group, wayPoints3, 2, tra2[Adata.captureRobot], true);
     seedTrajectory(tra2[0], tra2[1]);
     return true;
 }
@@ -1815,7 +1813,6 @@ bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterf
     {
         for(int k=1; k<trajectory[j].joint_trajectory.points.size(); ++k)
         {
-            targetTrajectory.joint_trajectory.joint_names.push_back(trajectory[j].joint_trajectory.joint_names[k]);
             targetTrajectory.joint_trajectory.points.push_back(trajectory[j].joint_trajectory.points[k]);
         }
     }
@@ -1909,30 +1906,30 @@ bool RubikCubeSolve::RobotTrajectoryLine(moveit::planning_interface::MoveGroupIn
 
 bool RubikCubeSolve::seedTrajectory(trajectory_msgs::JointTrajectory& robot0Trajectory, trajectory_msgs::JointTrajectory& robot1Trajectory)
 {
-    // hirop_msgs::dualRbtraject srv;
-    // srv.request.robotMotionTraject_list.resize(2);
-    // srv.request.robotMotionTraject_list[0].moveGroup_name = move_group0.getName();
-    // srv.request.robotMotionTraject_list[0].robot_jointTra = robot0Trajectory;
-    // srv.request.robotMotionTraject_list[1].moveGroup_name = move_group1.getName();
-    // srv.request.robotMotionTraject_list[1].robot_jointTra = robot1Trajectory;
-    // if(dualRobottrajectory.call(srv))
-    // {
-    //     return srv.response.is_success;
-    // }
-    // else
-    // {
-    //     return false;
-    // }
-    ROS_INFO("---->>>>----");
-    moveit_msgs::RobotTrajectory j0;
-    moveit_msgs::RobotTrajectory j1;
-    j0.joint_trajectory = robot0Trajectory;
-    j1.joint_trajectory = robot1Trajectory;
-    moveit::planning_interface::MoveGroupInterface::Plan plan0;
-    moveit::planning_interface::MoveGroupInterface::Plan plan1;
-    plan0.trajectory_ = j0;
-    plan1.trajectory_ = j1;
-    move_group0.execute(plan0);
-    move_group1.execute(plan1);
-    return true;
+    hirop_msgs::dualRbtraject srv;
+    srv.request.robotMotionTraject_list.resize(2);
+    srv.request.robotMotionTraject_list[0].moveGroup_name = move_group0.getName();
+    srv.request.robotMotionTraject_list[0].robot_jointTra = robot0Trajectory;
+    srv.request.robotMotionTraject_list[1].moveGroup_name = move_group1.getName();
+    srv.request.robotMotionTraject_list[1].robot_jointTra = robot1Trajectory;
+    if(dualRobottrajectory.call(srv))
+    {
+        return srv.response.is_success;
+    }
+    else
+    {
+        return false;
+    }
+    // ROS_INFO("---->>>>----");
+    // moveit_msgs::RobotTrajectory j0;
+    // moveit_msgs::RobotTrajectory j1;
+    // j0.joint_trajectory = robot0Trajectory;
+    // j1.joint_trajectory = robot1Trajectory;
+    // moveit::planning_interface::MoveGroupInterface::Plan plan0;
+    // moveit::planning_interface::MoveGroupInterface::Plan plan1;
+    // plan0.trajectory_ = j0;
+    // plan1.trajectory_ = j1;
+    // move_group0.execute(plan0);
+    // move_group1.execute(plan1);
+    // return true;
 }
