@@ -274,7 +274,7 @@ void RubikCubeSolve::shoot(int num)
         cubeParse::TakePhoto srv;
         srv.request.photoNum = num;
         shootClient.call(srv);
-        ros::WallDuration(2.0).sleep();
+        ros::WallDuration(1.0).sleep();
     }
 }
 
@@ -893,7 +893,7 @@ bool RubikCubeSolve::openGripper(moveit::planning_interface::MoveGroupInterface&
             ROS_INFO("arm1 openGripper ");
             flag = openGripper_client1.call(srv);
         }
-        ros::Duration(1).sleep();
+        // ros::Duration(1).sleep();
    }
     return flag;
 }
@@ -913,7 +913,7 @@ bool RubikCubeSolve::closeGripper(moveit::planning_interface::MoveGroupInterface
             ROS_INFO("arm1 closeGripper ");
             flag = closeGripper_client1.call(srv);
         }
-        ros::Duration(1).sleep();
+        // ros::Duration(1).sleep();
    }
     return flag;
 }
