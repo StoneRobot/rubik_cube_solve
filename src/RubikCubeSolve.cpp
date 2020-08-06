@@ -1907,6 +1907,10 @@ bool RubikCubeSolve::RobotTrajectoryLine(moveit::planning_interface::MoveGroupIn
 bool RubikCubeSolve::seedTrajectory(trajectory_msgs::JointTrajectory& robot0Trajectory, trajectory_msgs::JointTrajectory& robot1Trajectory)
 {
     hirop_msgs::dualRbtraject srv;
+
+    ROS_ERROR_STREAM("Trajectory0: " << robot0Trajectory.points.size());
+    ROS_ERROR_STREAM("Trajectory1: " << robot1Trajectory.points.size());
+
     srv.request.robotMotionTraject_list.resize(2);
     srv.request.robotMotionTraject_list[0].moveGroup_name = move_group0.getName();
     srv.request.robotMotionTraject_list[0].robot_jointTra = robot0Trajectory;
