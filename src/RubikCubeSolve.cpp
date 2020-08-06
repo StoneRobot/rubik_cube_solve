@@ -1460,6 +1460,7 @@ bool RubikCubeSolve::writePoseOnceFile(const std::string& name, const geometry_m
 
 void RubikCubeSolve::robotMoveCartesian(moveit::planning_interface::MoveGroupInterface &group, double x, double y, double z)
 {
+    ROS_INFO_STREAM("robotMoveCartesian: " << group.getName());
     // if(group.getName() == "arm1")
     ros::Duration(1).sleep();
     setStartState(group);
@@ -1480,6 +1481,7 @@ void RubikCubeSolve::robotMoveCartesian(moveit::planning_interface::MoveGroupInt
     plan.trajectory_ = trajectory;
     if(!isStop)
         group.execute(plan);
+    ROS_INFO_STREAM("robotMoveCartesian over" );
 }
 
 void RubikCubeSolve::backHome(int robot)
@@ -1718,6 +1720,7 @@ bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterf
                             trajectory_msgs::JointTrajectory& tra, 
                             bool only_plan=true)
 {
+    ROS_INFO_STREAM("setAndMoveMulti: " << group.getName() << " " << "only_plan: " << only_plan);
     setStartState(group);
     ROS_INFO_STREAM("type: " << type);
     bool flag;
@@ -1822,7 +1825,7 @@ bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterf
 
     rt.setRobotTrajectoryMsg(*(group.getCurrentState()), targetTrajectory);
     trajectory_processing::IterativeParabolicTimeParameterization iptp;
-    iptp.computeTimeStamps(rt, 1.0, 1.0);
+    iptp.computeTimeStamps(rt, 0.5, 0.5);
 
     rt.getRobotTrajectoryMsg(multi_plan.trajectory_);
 
@@ -1850,15 +1853,27 @@ bool RubikCubeSolve::setAndMoveMulti(moveit::planning_interface::MoveGroupInterf
     else
     {
         // 执行
+        std::vector<trajectory_msgs::JointTrajectory> tra;
+        tra.resize(2);
         setStartState(group);
-        if (!group.execute(multi_plan))
+        // if (!group.execute(multi_plan))
+        // {
+        //     ROS_ERROR("Failed to execute plan");
+        //     system("rosrun rubik_cube_solve set_robot_enable_false.sh");
+        //     return false;
+        // }
+        // ROS_ERROR("SUCCEED to execute plan");
+        if(group.getName() == "arm0")
         {
-            ROS_ERROR("Failed to execute plan");
-            return false;
+            tra[0] = multi_plan.trajectory_.joint_trajectory;
         }
-        ROS_ERROR("SUCCEED to execute plan");
-
+        else
+        {
+            tra[1] = multi_plan.trajectory_.joint_trajectory;
+        }
+        seedTrajectory(tra[0], tra[1]);
     }
+    ROS_INFO_STREAM("setAndMoveMulti over");
     return true;
 }
 
@@ -1868,11 +1883,16 @@ bool RubikCubeSolve::RobotTrajectory(moveit::planning_interface::MoveGroupInterf
                 robot_state::RobotState& r)
 {
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-    bool flag;
+    bool flag = false;
     // 规划
     group.setStartState(r);
     group.setPoseTarget(TargetPose);
-    flag = (group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    int cnt =0;
+    while (!flag && ros::ok() && cnt <5)
+    {
+        flag = (group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+        cnt++;
+    }
     if(flag)
     {
         trajectory.joint_trajectory.joint_names = my_plan.trajectory_.joint_trajectory.joint_names;
@@ -1906,8 +1926,9 @@ bool RubikCubeSolve::RobotTrajectoryLine(moveit::planning_interface::MoveGroupIn
 
 bool RubikCubeSolve::seedTrajectory(trajectory_msgs::JointTrajectory& robot0Trajectory, trajectory_msgs::JointTrajectory& robot1Trajectory)
 {
+    ros::Duration(1.0).sleep();
     hirop_msgs::dualRbtraject srv;
-
+    bool flag;
     ROS_ERROR_STREAM("Trajectory0: " << robot0Trajectory.points.size());
     ROS_ERROR_STREAM("Trajectory1: " << robot1Trajectory.points.size());
 
@@ -1918,12 +1939,14 @@ bool RubikCubeSolve::seedTrajectory(trajectory_msgs::JointTrajectory& robot0Traj
     srv.request.robotMotionTraject_list[1].robot_jointTra = robot1Trajectory;
     if(dualRobottrajectory.call(srv))
     {
-        return srv.response.is_success;
+        flag = srv.response.is_success;
     }
     else
     {
-        return false;
+        flag = false;
     }
+    ROS_INFO_STREAM("seedTrajectory over");
+    return flag;
     // ROS_INFO("---->>>>----");
     // moveit_msgs::RobotTrajectory j0;
     // moveit_msgs::RobotTrajectory j1;
